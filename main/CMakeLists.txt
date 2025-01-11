@@ -1,6 +1,19 @@
-idf_component_register(SRCS 
-                        "app_main.cpp" "provision.c" "mqtt_wrapper.cpp" "blink.cpp" 
-                         "utils.cpp"
-                        INCLUDE_DIRS "." 
-                    REQUIRES nvs_flash wifi_provisioning json esp_wifi mqtt driver spi_flash
-                    )
+idf_component_register(
+    SRCS
+        "app_main.cpp" 
+        "provision.c" 
+        "mqtt_wrapper.cpp" 
+        "blink.cpp" 
+        "utils.cpp" 
+        "sntp.cpp"
+    INCLUDE_DIRS
+        "." 
+    REQUIRES
+        nvs_flash 
+        wifi_provisioning 
+        json 
+        esp_wifi 
+        mqtt 
+        driver 
+        spi_flash
+    )

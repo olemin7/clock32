@@ -38,6 +38,7 @@
 #include "mqtt_wrapper.hpp"
 #include "blink.hpp"
 #include "utils.hpp"
+#include "sntp.hpp"
 
 using namespace std::chrono_literals;
 
@@ -128,6 +129,7 @@ extern "C" void app_main(void) {
         10000 / portTICK_PERIOD_MS);
     blink::start(blink::BLINK_PROVISIONED);
     ESP_LOGI(TAG, "wrapping");
+    sntp::init();
     if (uxBits & MQTT_CONNECTED_EVENT)
     {
         ESP_LOGI(TAG, "flush %d", mqtt_mng->flush(5s));
@@ -135,6 +137,10 @@ extern "C" void app_main(void) {
     else
     {
         ESP_LOGW(TAG, "no MQTT_CONNECTED_EVENT");
+    }
+    while (1)
+    {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
     //  mqtt_mng.reset();some error
 }
