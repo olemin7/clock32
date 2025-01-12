@@ -16,123 +16,49 @@ namespace sntp
 {
     static const char *TAG = "sntp";
 
-    /* Variable holding number of times ESP32 restarted since first boot.
-     * It is placed into RTC memory using RTC_DATA_ATTR and
-     * maintains its value when ESP32 wakes from deep sleep.
-     */
-
-    static void obtain_time(void);
-
-#ifdef CONFIG_SNTP_TIME_SYNC_METHOD_CUSTOM
-    void sntp_sync_time(struct timeval *tv)
-    {
-        settimeofday(tv, NULL);
-        ESP_LOGI(TAG, "Time is synchronized from custom code");
-        sntp_set_sync_status(SNTP_SYNC_STATUS_COMPLETED);
-    }
-#endif
-
     void time_sync_notification_cb(struct timeval *tv)
     {
-        ESP_LOGI(TAG, "Notification of a time synchronization event");
-    }
-
-    void init()
-    {
-        ESP_LOGI(TAG, "init");
-
-        time_t now;
-        struct tm timeinfo;
-        time(&now);
-        localtime_r(&now, &timeinfo);
-        // Is time set? If not, tm_year will be (1970 - 1900).
-        if (timeinfo.tm_year < (2016 - 1900))
-        {
-            ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
-            obtain_time();
-            // update 'now' variable with current time
+            ESP_LOGI(TAG, "got Epoch = %lld", tv->tv_sec);
+            time_t now;
+            struct tm timeinfo;
             time(&now);
-        }
-#ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
-        else
-        {
-            // add 500 ms error to the current system time.
-            // Only to demonstrate a work of adjusting method!
-            {
-                ESP_LOGI(TAG, "Add a error for test adjtime");
-                struct timeval tv_now;
-                gettimeofday(&tv_now, NULL);
-                int64_t cpu_time = (int64_t)tv_now.tv_sec * 1000000L + (int64_t)tv_now.tv_usec;
-                int64_t error_time = cpu_time + 500 * 1000L;
-                struct timeval tv_error = {.tv_sec = error_time / 1000000L, .tv_usec = error_time % 1000000L};
-                settimeofday(&tv_error, NULL);
-            }
 
-            ESP_LOGI(TAG, "Time was set, now just adjusting it. Use SMOOTH SYNC method.");
-            obtain_time();
-            // update 'now' variable with current time
-            time(&now);
-        }
-#endif
+            char strftime_buf[64];
 
-        char strftime_buf[64];
+            // Set timezone to Eastern Standard Time and print local time
 
-        // Set timezone to Eastern Standard Time and print local time
-        setenv("TZ", "EST5EDT,M3.2.0/2,M11.1.0", 1);
-        tzset();
-        localtime_r(&now, &timeinfo);
-        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        ESP_LOGI(TAG, "The current date/time in New York is: %s", strftime_buf);
-
-        // Set timezone to China Standard Time
-        setenv("TZ", "CST-8", 1);
-        tzset();
-        localtime_r(&now, &timeinfo);
-        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
-
-        if (sntp_get_sync_mode() == SNTP_SYNC_MODE_SMOOTH)
-        {
-            struct timeval outdelta;
-            while (sntp_get_sync_status() == SNTP_SYNC_STATUS_IN_PROGRESS)
-            {
-                adjtime(NULL, &outdelta);
-                ESP_LOGI(TAG, "Waiting for adjusting time ... outdelta = %jd sec: %li ms: %li us",
-                         (intmax_t)outdelta.tv_sec,
-                         outdelta.tv_usec / 1000,
-                         outdelta.tv_usec % 1000);
-                vTaskDelay(2000 / portTICK_PERIOD_MS);
-            }
-        }
-
-        const int deep_sleep_sec = 10;
-        ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
+            localtime_r(&now, &timeinfo);
+            strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+            ESP_LOGI(TAG, "Local time: %s", strftime_buf);
     }
 
     static void print_servers(void)
     {
-        ESP_LOGI(TAG, "List of configured NTP servers:");
+            ESP_LOGI(TAG, "NTP servers:");
 
-        for (uint8_t i = 0; i < SNTP_MAX_SERVERS; ++i)
-        {
-            if (esp_sntp_getservername(i))
+            for (uint8_t i = 0; i < SNTP_MAX_SERVERS; ++i)
             {
-                ESP_LOGI(TAG, "server %d: %s", i, esp_sntp_getservername(i));
+                    if (esp_sntp_getservername(i))
+                    {
+                            ESP_LOGI(TAG, "%d: %s", i, esp_sntp_getservername(i));
+                    }
+                    else
+                    {
+                            // we have either IPv4 or IPv6 address, let's print it
+                            char buff[INET6_ADDRSTRLEN];
+                            ip_addr_t const *ip = esp_sntp_getserver(i);
+                            if (ipaddr_ntoa_r(ip, buff, INET6_ADDRSTRLEN) != NULL)
+                                    ESP_LOGI(TAG, "server %d: %s", i, buff);
+                    }
             }
-            else
-            {
-                // we have either IPv4 or IPv6 address, let's print it
-                char buff[INET6_ADDRSTRLEN];
-                ip_addr_t const *ip = esp_sntp_getserver(i);
-                if (ipaddr_ntoa_r(ip, buff, INET6_ADDRSTRLEN) != NULL)
-                    ESP_LOGI(TAG, "server %d: %s", i, buff);
-            }
-        }
     }
 
-    static void obtain_time(void)
+    void init()
     {
-
+            ESP_LOGI(TAG, "init");
+            ESP_LOGI(TAG, "CONFIG_TIMEZONE=%s", CONFIG_TIMEZONE);
+            setenv("TZ", CONFIG_TIMEZONE, 1);
+            tzset();
 #if LWIP_DHCP_GET_NTP_SRV
         /**
          * NTP server address could be acquired via DHCP,
@@ -159,11 +85,6 @@ namespace sntp
         esp_netif_sntp_init(&config);
 
 #endif /* LWIP_DHCP_GET_NTP_SRV */
-
-        /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-         * Read "Establishing Wi-Fi or Ethernet Connection" section in
-         * examples/protocols/README.md for more information about this function.
-         */
 
 #if LWIP_DHCP_GET_NTP_SRV
         ESP_LOGI(TAG, "Starting SNTP");
@@ -193,28 +114,11 @@ namespace sntp
         esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_SNTP_TIME_SERVER);
 #endif
         config.sync_cb = time_sync_notification_cb; // Note: This is only needed if we want
-#ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
-        config.smooth_sync = true;
+        config.wait_for_sync = false;
+        config.server_from_dhcp = true;
+        ESP_ERROR_CHECK(esp_netif_sntp_init(&config));
 #endif
-
-        esp_netif_sntp_init(&config);
-#endif
-
         print_servers();
-
-        // wait for time to be set
-        time_t now = 0;
-        struct tm timeinfo = {0};
-        int retry = 0;
-        const int retry_count = 15;
-        while (esp_netif_sntp_sync_wait(2000 / portTICK_PERIOD_MS) == ESP_ERR_TIMEOUT && ++retry < retry_count)
-        {
-            ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
-        }
-        time(&now);
-        localtime_r(&now, &timeinfo);
-
-        esp_netif_sntp_deinit();
     }
 
 }

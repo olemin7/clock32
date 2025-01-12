@@ -54,3 +54,8 @@ mosquitto_pub -h central.local -d -t stat/pr_clock -m "Hello from terminal windo
 sudo tail -f /var/log/mosquitto/mosquitto.log
 
 https://github.com/nopnop2002/esp-idf-json/tree/master/json-basic-object
+
+[rtc]
+CONFIG_RTC_CLK_SRC ->External 32kHz crystal
+[sntp]
+Request interval to update time

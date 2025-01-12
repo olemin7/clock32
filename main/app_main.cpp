@@ -81,6 +81,7 @@ static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t
     ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
     ESP_LOGI(TAG, "Connected with IP Address: %s", utils::to_Str(event->ip_info.ip).c_str());
     /* Signal main application to continue execution */
+    sntp::init();
 
     mqtt_mng =
         std::make_unique<mqtt::CMQTTWrapper>([]() { xEventGroupSetBits(app_main_event_group, MQTT_CONNECTED_EVENT); });
@@ -125,11 +126,11 @@ extern "C" void app_main(void) {
     blink::start(blink::BLINK_PROVISIONING);
     provision_main();
     ESP_LOGI(TAG, "started");
+
     const auto uxBits = xEventGroupWaitBits(app_main_event_group, SENSORS_DONE | MQTT_CONNECTED_EVENT, pdTRUE, pdTRUE,
         10000 / portTICK_PERIOD_MS);
     blink::start(blink::BLINK_PROVISIONED);
     ESP_LOGI(TAG, "wrapping");
-    sntp::init();
     if (uxBits & MQTT_CONNECTED_EVENT)
     {
         ESP_LOGI(TAG, "flush %d", mqtt_mng->flush(5s));
