@@ -23,10 +23,12 @@ GPIO_NUM_5  | A5  | MISO |
 GPIO_NUM_6  |     | MOSI |
 GPIO_NUM_7  |     | SS   |
 GPIO_NUM_8  |     | SDA  | LED
-GPIO_NUM_9  |     | SDL  |
+GPIO_NUM_9  |     | SDL  | BOOT_BUTTON
 GPIO_NUM_10 |     |      |
 GPIO_NUM_20 |     | RX   |
 GPIO_NUM_21 |     | TX   |
+
+#Display MAX7219 
 
 
 https://github.com/DiegoPaezA/ESP32-freeRTOS/blob/master/i2c_scanner/main/i2c_scanner.c
@@ -59,3 +61,18 @@ https://github.com/nopnop2002/esp-idf-json/tree/master/json-basic-object
 CONFIG_RTC_CLK_SRC ->External 32kHz crystal
 [sntp]
 Request interval to update time
+[button]
+todo boot btn to go provision mode?
+
+[termomenter]
+https://www.lucadentella.it/en/2017/10/13/esp32-24-i2c-un-esempio-pratico-con-sensore-htu21d/
+https://github.com/kimsniper/htu21d/tree/master/examples/esp32_implementation/main
+si7021 (htu2x)
+
+[esp-idf-lib]
+https://esp-idf-lib.readthedocs.io/en/latest/index.html
+git clone git@github.com:UncleRus/esp-idf-lib.git
+
+[adc]
+https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/peripherals/adc.html
+#photoresistor (+3.3) -photoresistor- (A0) -resistor 10k- (GND)

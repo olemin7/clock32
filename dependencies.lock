@@ -1,4 +1,18 @@
 dependencies:
+  espressif/button:
+    component_hash: 30a3f495c3862d505ce6e41adbbd218b2750e9723ab2151feff00e9fe685b326
+    dependencies:
+    - name: espressif/cmake_utilities
+      registry_url: https://components.espressif.com
+      require: private
+      version: 0.*
+    - name: idf
+      require: private
+      version: '>=4.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 3.5.0
   espressif/cmake_utilities:
     component_hash: 351350613ceafba240b761b4ea991e0f231ac7a9f59a9ee901f751bddc0bb18f
     dependencies:
@@ -83,12 +97,13 @@ dependencies:
       type: idf
     version: 5.4.0
 direct_dependencies:
+- espressif/button
 - espressif/esp-idf-cxx
 - espressif/esp_mqtt_cxx
 - espressif/led_indicator
 - espressif/network_provisioning
 - espressif/qrcode
 - idf
-manifest_hash: 4e23dd996f8b2922a2c986eb8039e9670ecabf91e44fac4278718213265fdca4
+manifest_hash: 52043ac06c3854218c37c97afae7807e200616a51dafe4e350bd49be1cd07441
 target: esp32c3
 version: 2.0.0

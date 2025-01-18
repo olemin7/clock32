@@ -1,11 +1,14 @@
 idf_component_register(
     SRCS
         "app_main.cpp" 
-        "provision.c" 
+        "lighting.cpp"
         "mqtt_wrapper.cpp" 
         "blink.cpp" 
         "utils.cpp" 
         "sntp.cpp"
+        "htu2x.c"
+        "provision.c"
+       
     INCLUDE_DIRS
         "." 
     REQUIRES
@@ -16,4 +19,5 @@ idf_component_register(
         mqtt 
         driver 
         spi_flash
+        si7021
     )

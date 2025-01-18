@@ -2,7 +2,7 @@
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyACM0",
     "idf.espIdfPath": "/home/oleksandrminenko/personal/esp-idf/v5.4/esp-idf",
-    "idf.toolsPath": "/home/oleksandrminenko/personal/esp-idf",
+    "idf.toolsPath": "/home/oleksandrminenko/.espressif",
     "files.associations": {
         "array": "cpp",
         "atomic": "cpp",
@@ -62,7 +62,11 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "inttypes.h": "c",
+        "blink.hpp": "c",
+        "stdio.h": "c",
+        "format": "cpp"
     },
     "git.ignoreLimitWarning": true
 }

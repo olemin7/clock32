@@ -1,7 +1,7 @@
 menu "App Configuration"
     config APP_NAME
         string "APP_NAME"
-        default "WEATHER"
+        default "CLOCK"
     
     menu "Provision"
     choice EXAMPLE_PROV_TRANSPORT
@@ -155,6 +155,11 @@ menu "App Configuration"
             string "TIMEZONE"
             default "GMT+2"
     endmenu
+    config LIGHTING_REFRESH
+        int
+        default 200
+        help
+            LIGHTING_REFRESH ms
 endmenu
 
 

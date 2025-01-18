@@ -10,6 +10,9 @@ dependencies:
   espressif/network_provisioning: "^0.2.0"
   led_indicator:
     version: '*'
+  button:
+    version: '*'
+
   
   # # For components maintained by Espressif:
   # component: "~1.0.0"
