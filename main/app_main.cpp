@@ -12,7 +12,7 @@
 
 #include <esp_log.h>
 #include <esp_wifi.h>
-#include <esp_event.h>
+
 #include <nvs_flash.h>
 #include <string>
 #include "freertos/queue.h"
@@ -20,8 +20,8 @@
 #include "esp_exception.hpp"
 #include "esp_wifi.h"
 #include "esp_err.h"
-#include "esp_event_cxx.hpp"
 #include "esp_timer_cxx.hpp"
+#include <esp_event.h>
 
 #include "json_helper.hpp"
 #include "provision.h"
@@ -35,14 +35,12 @@
 
 using namespace std::chrono_literals;
 
-std::shared_ptr<idf::event::ESPEventLoop> el;
 std::unique_ptr<mqtt::CMQTTWrapper>       mqtt_mng;
 static const char *TAG = "main";
 
 static EventGroupHandle_t app_main_event_group;
 constexpr int             SENSORS_DONE         = BIT0;
-constexpr int             MQTT_CONNECTED_EVENT = BIT1;
-std::unique_ptr<lighting::lighting> lighting_ptr;
+constexpr int MQTT_CONNECTED_EVENT = BIT1;
 
 static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
@@ -64,6 +62,13 @@ static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t
     mqtt_mng->publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, PrintUnformatted(json_obj));
 }
 
+static void event_light(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+{
+    const auto update = (lighting::update_t *)event_data;
+
+    ESP_LOGI(TAG, "!!!=%u", update->raw);
+}
+
 #define BOOT_BUTTON_NUM 9
 #define BUTTON_ACTIVE_LEVEL 0
 static void button_event_cb(void *arg, void *data)
@@ -74,6 +79,8 @@ static void button_event_cb(void *arg, void *data)
 }
 
 void init() {
+    // Create a default event loop
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
     app_main_event_group = xEventGroupCreate();
     /* Initialize NVS partition */
     esp_err_t ret = nvs_flash_init();
@@ -90,8 +97,9 @@ void init() {
     ESP_ERROR_CHECK(esp_netif_init());
 
     /* Initialize the event loop */
-    el = std::make_shared<idf::event::ESPEventLoop>();
+
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_got_ip_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(lighting::event, lighting::update, &event_light, NULL));
     blink::init();
 
     button_config_t btn_cfg = {
@@ -108,7 +116,7 @@ void init() {
     ESP_ERROR_CHECK(iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
 
     htu2x_init();
-    lighting_ptr = std::make_unique<lighting::lighting>();
+    lighting::init();
 }
 
 extern "C" void app_main(void) {

@@ -512,6 +512,7 @@ CONFIG_TIMEZONE="GMT-2"
 # end of Clock
 
 CONFIG_LIGHTING_REFRESH=200
+CONFIG_LIGHTING_NOISE=10
 # end of App Configuration
 
 #

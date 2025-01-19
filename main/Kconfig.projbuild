@@ -160,6 +160,10 @@ menu "App Configuration"
         default 200
         help
             LIGHTING_REFRESH ms
+        config LIGHTING_NOISE
+            int
+            default 10
+
 endmenu
 
 

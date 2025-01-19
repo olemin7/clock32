@@ -16,18 +16,20 @@
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
-#include <chrono>
+#include "esp_system.h"
 #include "sdkconfig.h"
 
 const static char *TAG = "LIGHTING";
-using namespace std::chrono_literals;
-class presistor
+
+namespace lighting
 {
-private:
-    static presistor *ptr_;
-    adc_oneshot_unit_handle_t adc1_handle;
-    presistor()
+    ESP_EVENT_DEFINE_BASE(event);
+
+    void task(void *pvParameter)
     {
+        ESP_LOGI(TAG, "init");
+
+        adc_oneshot_unit_handle_t adc1_handle;
         //-------------ADC1 Init---------------//
 
         adc_oneshot_unit_init_cfg_t init_config1 = {
@@ -41,37 +43,24 @@ private:
             .bitwidth = ADC_BITWIDTH_DEFAULT,
         };
         ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &config));
+        auto pre_val = int{-1};
+        while (1)
+        {
+            update_t val;
+            ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &val.raw));
+            ESP_LOGD(TAG, "ADC Raw Data: %d", val.raw);
+            if (std::abs(pre_val - val.raw) > CONFIG_LIGHTING_NOISE)
+            {
+                pre_val = val.raw;
+                ESP_ERROR_CHECK(esp_event_post(event, update, &val, sizeof(val), portMAX_DELAY));
+            }
+            vTaskDelay(pdMS_TO_TICKS(CONFIG_LIGHTING_REFRESH));
+        }
     }
 
-public:
-    presistor(presistor &other) = delete;
-    void operator=(const presistor &) = delete;
-    uint16_t get() const
+    void init()
     {
-        int adc_raw;
-        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &adc_raw));
-        ESP_LOGD(TAG, "ADC Raw Data: %d", adc_raw);
-        return adc_raw;
-    }
-    static presistor &instance();
-};
-
-presistor *presistor::ptr_ = nullptr;
-presistor &presistor::instance()
-{
-    if (!ptr_)
-    {
-        ptr_ = new presistor();
-    }
-    return *ptr_;
-}
-
-namespace lighting
-{
-
-    lighting::lighting() : timer_([this]()
-                                  { adc_val_ = presistor::instance().get(); })
-    {
-        timer_.start_periodic(std::chrono::milliseconds(CONFIG_LIGHTING_REFRESH));
+        ESP_LOGI(TAG, "starting");
+        xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE + 1024, NULL, 5, NULL);
     }
 }

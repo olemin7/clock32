@@ -11,10 +11,9 @@
 #include <freertos/task.h>
 #include <si7021.h>
 #include <string.h>
+#include "esp_log.h"
 
-#ifndef APP_CPU_NUM
-#define APP_CPU_NUM PRO_CPU_NUM
-#endif
+static const char *TAG = "si7021";
 
 static void task(void *pvParameters)
 {
@@ -66,15 +65,23 @@ static void task(void *pvParameters)
          */
         res = si7021_measure_temperature(&dev, &val);
         if (res != ESP_OK)
-            printf("Could not measure temperature: %d (%s)\n", res, esp_err_to_name(res));
+        {
+            ESP_LOGE(TAG, "Could not measure temperature: %d (%s)", res, esp_err_to_name(res));
+        }
         else
-            printf("Temperature: %.2f\n", val);
+        {
+            ESP_LOGD(TAG, "Temperature: %.2f\n", val);
+        }
 
         res = si7021_measure_humidity(&dev, &val);
         if (res != ESP_OK)
-            printf("Could not measure humidity: %d (%s)\n", res, esp_err_to_name(res));
+        {
+            ESP_LOGE(TAG, "Could not measure humidity: %d (%s)", res, esp_err_to_name(res));
+        }
         else
-            printf("Humidity: %.2f\n", val);
+        {
+            ESP_LOGD(TAG, "Humidity: %.2f\n", val);
+        }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
@@ -84,5 +91,5 @@ void htu2x_init()
 {
     ESP_ERROR_CHECK(i2cdev_init());
 
-    xTaskCreatePinnedToCore(task, "test", configMINIMAL_STACK_SIZE * 8, NULL, 5, NULL, APP_CPU_NUM);
+    xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE * 8, NULL, 5, NULL);
 }
