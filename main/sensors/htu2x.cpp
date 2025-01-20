@@ -92,9 +92,24 @@ static void task(void *pvParameters)
     }
 }
 
+void echo_temperature(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+{
+    const auto temperature = (sensor_event::temperature_t *)event_data;
+    ESP_LOGI(TAG, "temperature=%f", temperature->val);
+}
+
+void echo_humidity(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+{
+    const auto humidity = (sensor_event::humidity_t *)event_data;
+    ESP_LOGI(TAG, "humidity=%f", humidity->val);
+}
+
 void htu2x::init()
 {
     ESP_ERROR_CHECK(i2cdev_init());
-
+#if 1
+    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &echo_temperature, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &echo_humidity, NULL));
+#endif
     xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE * 8, NULL, 5, NULL);
 }

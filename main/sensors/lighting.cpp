@@ -58,9 +58,17 @@ namespace lighting
         }
     }
 
+    void echo(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+    {
+        const auto update = (sensor_event::lighting_t *)event_data;
+
+        ESP_LOGI(TAG, "lighting=%u", update->raw);
+    }
+
     void init()
     {
         ESP_LOGI(TAG, "starting");
+        ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &echo, NULL));
         xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE + 1024, NULL, 5, NULL);
     }
 }

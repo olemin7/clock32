@@ -11,19 +11,19 @@ https://github.com/espressif/esp-iot-solution
 
 # esp32c3_supermini
     Pin     | ADC | func |
-GPIO_NUM_0  | A0  |      |
+GPIO_NUM_0  | A0  |      |photoresistor
 GPIO_NUM_1  | A1  |      |
 GPIO_NUM_2  | A2  |      |
 GPIO_NUM_3  | A3  |      |
-GPIO_NUM_4  | A4  | SCK  |
+GPIO_NUM_4  | A4  | SCK  | max7219 CLK
 3V3
 GND
 5V
-GPIO_NUM_5  | A5  | MISO |
-GPIO_NUM_6  |     | MOSI |
-GPIO_NUM_7  |     | SS   |
-GPIO_NUM_8  |     | SDA  | LED
-GPIO_NUM_9  |     | SDL  | BOOT_BUTTON
+GPIO_NUM_5  | A5  | MISO | max7219 CS
+GPIO_NUM_6  |     | MOSI | max7219 DIN
+GPIO_NUM_7  |     | SS   | 
+GPIO_NUM_8  |     | SDA  | LED           |HTU2x SDA
+GPIO_NUM_9  |     | SDL  | BOOT_BUTTON   |HTU2x SDL
 GPIO_NUM_10 |     |      |
 GPIO_NUM_20 |     | RX   |
 GPIO_NUM_21 |     | TX   |
@@ -78,3 +78,5 @@ https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/periph
 #photoresistor (+3.3) -photoresistor- (A0) -resistor 10k- (GND)
 
 https://esp32tutorials.com/esp32-esp-idf-max7219-dot-matrix-display
+
+https://xantorohara.github.io/led-matrix-editor/#7e1818181c181800|7e060c3060663c00|3c66603860663c00|30307e3234383000|3c6660603e067e00|3c66663e06663c00|1818183030667e00|3c66663c66663c00|3c66607c66663c00|3c66666e76663c00

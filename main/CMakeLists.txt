@@ -1,13 +1,13 @@
 idf_component_register(
     SRCS
         "app_main.cpp" 
-        "sensor_event.cpp"
-        "lighting.cpp"
         "mqtt_wrapper.cpp" 
         "blink.cpp" 
         "utils.cpp" 
         "sntp.cpp"
-        "htu2x.cpp"
+        "sensors/sensor_event.cpp"
+        "sensors/lighting.cpp"
+        "sensors/htu2x.cpp"
         "provision.c"
        
     INCLUDE_DIRS

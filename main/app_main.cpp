@@ -30,9 +30,9 @@
 #include "utils.hpp"
 #include "sntp.hpp"
 #include "iot_button.h"
-#include "sensor_event.hpp"
-#include "htu2x.hpp"
-#include "lighting.hpp"
+#include "sensors/sensor_event.hpp"
+#include "sensors/htu2x.hpp"
+#include "sensors/lighting.hpp"
 
 using namespace std::chrono_literals;
 
@@ -61,13 +61,6 @@ static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t
     cJSON_AddStringToObject(json_obj.get(), "mac", utils::get_mac().c_str());
 
     mqtt_mng->publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, PrintUnformatted(json_obj));
-}
-
-static void event_light(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
-{
-    const auto update = (sensor_event::lighting_t *)event_data;
-
-    ESP_LOGI(TAG, "!!!=%u", update->raw);
 }
 
 #define BOOT_BUTTON_NUM 9
@@ -100,7 +93,6 @@ void init() {
     /* Initialize the event loop */
 
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_got_ip_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &event_light, NULL));
     blink::init();
 
     button_config_t btn_cfg = {
