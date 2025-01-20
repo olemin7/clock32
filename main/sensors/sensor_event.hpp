@@ -16,7 +16,11 @@ namespace sensor_event
     typedef struct
     {
         int raw;
+        uint16_t lux;
     } lighting_t;
+
+    constexpr auto LUX_MAX = 1000;
+    constexpr auto LUX_MIN = 0;
 
     typedef struct
     {

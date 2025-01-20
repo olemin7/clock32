@@ -5,10 +5,11 @@ idf_component_register(
         "blink.cpp" 
         "utils.cpp" 
         "sntp.cpp"
+        "screen.cpp"
+        "provision.c"
         "sensors/sensor_event.cpp"
         "sensors/lighting.cpp"
         "sensors/htu2x.cpp"
-        "provision.c"
        
     INCLUDE_DIRS
         "." 
@@ -21,4 +22,5 @@ idf_component_register(
         driver 
         spi_flash
         si7021
+        max7219
     )

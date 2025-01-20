@@ -8,6 +8,7 @@ set(EXTRA_COMPONENT_DIRS
     $ENV{HOME}/personal/esp-idf/esp-idf-lib/components/si7021
     $ENV{HOME}/personal/esp-idf/esp-idf-lib/components/i2cdev
     $ENV{HOME}/personal/esp-idf/esp-idf-lib/components/esp_idf_lib_helpers
+    $ENV{HOME}/personal/esp-idf/esp-idf-lib/components/max7219
     )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

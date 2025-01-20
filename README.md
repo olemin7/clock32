@@ -19,6 +19,7 @@ GPIO_NUM_4  | A4  | SCK  | max7219 CLK
 3V3
 GND
 5V
+-------------------------------------
 GPIO_NUM_5  | A5  | MISO | max7219 CS
 GPIO_NUM_6  |     | MOSI | max7219 DIN
 GPIO_NUM_7  |     | SS   | 

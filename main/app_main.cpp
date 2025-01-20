@@ -33,6 +33,7 @@
 #include "sensors/sensor_event.hpp"
 #include "sensors/htu2x.hpp"
 #include "sensors/lighting.hpp"
+#include "screen.hpp"
 
 using namespace std::chrono_literals;
 
@@ -94,6 +95,7 @@ void init() {
 
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_got_ip_handler, NULL));
     blink::init();
+    screen::init();
 
     button_config_t btn_cfg = {
         .type = BUTTON_TYPE_GPIO,
@@ -108,7 +110,7 @@ void init() {
     assert(btn);
     ESP_ERROR_CHECK(iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
 
-    htu2x::init();
+    //   htu2x::init();
     lighting::init();
 }
 

@@ -24,7 +24,7 @@ const static char *TAG = "LIGHTING";
 
 namespace lighting
 {
-
+    using namespace sensor_event;
     void task(void *pvParameter)
     {
         ESP_LOGI(TAG, "init");
@@ -52,6 +52,17 @@ namespace lighting
             if (std::abs(pre_val - val.raw) > CONFIG_LIGHTING_NOISE)
             {
                 pre_val = val.raw;
+                auto raw = val.raw;
+                if (raw > CONFIG_LIGHTING_MAX_RAW)
+                {
+                    raw = CONFIG_LIGHTING_MAX_RAW;
+                }
+                else if (raw < CONFIG_LIGHTING_MIN_RAW)
+                {
+                    raw = CONFIG_LIGHTING_MIN_RAW;
+                }
+
+                val.lux = (LUX_MAX - LUX_MIN) * (CONFIG_LIGHTING_MAX_RAW - raw) / (CONFIG_LIGHTING_MAX_RAW - CONFIG_LIGHTING_MIN_RAW) + LUX_MIN;
                 ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::lighting, &val, sizeof(val), portMAX_DELAY));
             }
             vTaskDelay(pdMS_TO_TICKS(CONFIG_LIGHTING_REFRESH));
@@ -62,7 +73,7 @@ namespace lighting
     {
         const auto update = (sensor_event::lighting_t *)event_data;
 
-        ESP_LOGI(TAG, "lighting=%u", update->raw);
+        ESP_LOGI(TAG, "adc=%d, lux=%u", update->raw, update->lux);
     }
 
     void init()

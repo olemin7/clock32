@@ -140,11 +140,8 @@ menu "App Configuration"
                 int
                 default 8
                 prompt "I2C_MASTER_SDA_IO"
-                
-        config PRESENT_BME280
-            bool "PRESENT_BME280"
-            default y
     endmenu
+
     menu "Clock"
         config SNTP_TIME_SERVER
             string "SNTP server name"
@@ -155,14 +152,38 @@ menu "App Configuration"
             string "TIMEZONE"
             default "GMT+2"
     endmenu
-    config LIGHTING_REFRESH
-        int
-        default 200
-        help
-            LIGHTING_REFRESH ms
+
+    menu "Sensors"
+        config LIGHTING_REFRESH
+            int
+            default 200
+            help
+                LIGHTING_REFRESH ms
         config LIGHTING_NOISE
             int
             default 10
+        config LIGHTING_MAX_RAW
+            int
+            default 4096
+        config LIGHTING_MIN_RAW
+            int
+            default 500
+    endmenu
+
+    menu "Display"
+        config EXAMPLE_SCROLL_DELAY
+            int "scrool deley in ms"
+            default 50
+            help
+                The delay in scrooling.
+    
+        config EXAMPLE_CASCADE_SIZE
+            int "the number of cascaded LED matrix"
+            default 1
+            help
+                The number of cascaded LED matrix displays.
+    
+    endmenu
 
 endmenu
 
