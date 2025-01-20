@@ -18,12 +18,12 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_system.h"
 #include "sdkconfig.h"
+#include "sensor_event.hpp"
 
 const static char *TAG = "LIGHTING";
 
 namespace lighting
 {
-    ESP_EVENT_DEFINE_BASE(event);
 
     void task(void *pvParameter)
     {
@@ -46,13 +46,13 @@ namespace lighting
         auto pre_val = int{-1};
         while (1)
         {
-            update_t val;
+            sensor_event::lighting_t val;
             ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &val.raw));
             ESP_LOGD(TAG, "ADC Raw Data: %d", val.raw);
             if (std::abs(pre_val - val.raw) > CONFIG_LIGHTING_NOISE)
             {
                 pre_val = val.raw;
-                ESP_ERROR_CHECK(esp_event_post(event, update, &val, sizeof(val), portMAX_DELAY));
+                ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::lighting, &val, sizeof(val), portMAX_DELAY));
             }
             vTaskDelay(pdMS_TO_TICKS(CONFIG_LIGHTING_REFRESH));
         }

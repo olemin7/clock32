@@ -30,7 +30,8 @@
 #include "utils.hpp"
 #include "sntp.hpp"
 #include "iot_button.h"
-#include "htu2x.h"
+#include "sensor_event.hpp"
+#include "htu2x.hpp"
 #include "lighting.hpp"
 
 using namespace std::chrono_literals;
@@ -64,7 +65,7 @@ static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t
 
 static void event_light(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
 {
-    const auto update = (lighting::update_t *)event_data;
+    const auto update = (sensor_event::lighting_t *)event_data;
 
     ESP_LOGI(TAG, "!!!=%u", update->raw);
 }
@@ -99,7 +100,7 @@ void init() {
     /* Initialize the event loop */
 
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_got_ip_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(lighting::event, lighting::update, &event_light, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &event_light, NULL));
     blink::init();
 
     button_config_t btn_cfg = {
@@ -115,7 +116,7 @@ void init() {
     assert(btn);
     ESP_ERROR_CHECK(iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
 
-    htu2x_init();
+    htu2x::init();
     lighting::init();
 }
 
