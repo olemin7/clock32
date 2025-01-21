@@ -2,5 +2,5 @@
 #include <functional>
 namespace sntp
 {
-    void init();
+    void init(std::function<void()> &&onsync_cb);
 }

@@ -34,34 +34,37 @@
 #include "sensors/htu2x.hpp"
 #include "sensors/lighting.hpp"
 #include "display/screen.hpp"
+#include "display/layers.hpp"
 
 using namespace std::chrono_literals;
+
+layers::layers diplay;
 
 std::unique_ptr<mqtt::CMQTTWrapper>       mqtt_mng;
 static const char *TAG = "main";
 
 static EventGroupHandle_t app_main_event_group;
-constexpr int             SENSORS_DONE         = BIT0;
+constexpr int GOT_IP = BIT0;
 constexpr int MQTT_CONNECTED_EVENT = BIT1;
 
 static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
     ESP_LOGI(TAG, "Connected with IP Address: %s", utils::to_Str(event->ip_info.ip).c_str());
+    diplay.show(5, utils::to_Str(event->ip_info.ip), screen::js_right);
+
     /* Signal main application to continue execution */
-    sntp::init();
+    xEventGroupSetBits(app_main_event_group, GOT_IP);
 
-    mqtt_mng =
-        std::make_unique<mqtt::CMQTTWrapper>([]() { xEventGroupSetBits(app_main_event_group, MQTT_CONNECTED_EVENT); });
-    auto json_obj = json::CreateObject();
-    cJSON_AddStringToObject(json_obj.get(), "app_name", CONFIG_APP_NAME);
-    cJSON_AddStringToObject(json_obj.get(), "ip", utils::to_Str(event->ip_info.ip).c_str());
-    int rssi;
-    ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&rssi));
-    cJSON_AddNumberToObject(json_obj.get(), "rssi", rssi);
+    // auto json_obj = json::CreateObject();
+    // cJSON_AddStringToObject(json_obj.get(), "app_name", CONFIG_APP_NAME);
+    // cJSON_AddStringToObject(json_obj.get(), "ip", utils::to_Str(event->ip_info.ip).c_str());
+    // int rssi;
+    // ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&rssi));
+    // cJSON_AddNumberToObject(json_obj.get(), "rssi", rssi);
 
-    cJSON_AddStringToObject(json_obj.get(), "mac", utils::get_mac().c_str());
+    // cJSON_AddStringToObject(json_obj.get(), "mac", utils::get_mac().c_str());
 
-    mqtt_mng->publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, PrintUnformatted(json_obj));
+    // mqtt_mng->publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, PrintUnformatted(json_obj));
 }
 
 #define BOOT_BUTTON_NUM 9
@@ -73,13 +76,15 @@ static void button_event_cb(void *arg, void *data)
     esp_restart();
 }
 
-void init() {
+void init()
+{
     // Create a default event loop
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     app_main_event_group = xEventGroupCreate();
     /* Initialize NVS partition */
     esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
         /* NVS partition was truncated
          * and needs to be erased */
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -114,17 +119,26 @@ void init() {
     lighting::init();
 }
 
-extern "C" void app_main(void) {
+extern "C" void app_main(void)
+{
     ESP_LOGI(TAG, "[APP] Startup..");
     utils::print_info();
     init();
     blink::start(blink::BLINK_PROVISIONING);
     provision_main();
     ESP_LOGI(TAG, "started");
-
-    const auto uxBits = xEventGroupWaitBits(app_main_event_group, SENSORS_DONE | MQTT_CONNECTED_EVENT, pdTRUE, pdTRUE,
-                                            pdMS_TO_TICKS(10000));
     blink::start(blink::BLINK_PROVISIONED);
+    xEventGroupWaitBits(app_main_event_group, GOT_IP, pdTRUE, pdTRUE,
+                        portMAX_DELAY);
+    sntp::init({});
+
+    mqtt_mng =
+        std::make_unique<mqtt::CMQTTWrapper>([]()
+                                             { xEventGroupSetBits(app_main_event_group, MQTT_CONNECTED_EVENT); });
+
+    const auto uxBits = xEventGroupWaitBits(app_main_event_group, MQTT_CONNECTED_EVENT, pdTRUE, pdTRUE,
+                                            pdMS_TO_TICKS(10000));
+
     ESP_LOGI(TAG, "wrapping");
     if (uxBits & MQTT_CONNECTED_EVENT)
     {
@@ -134,9 +148,10 @@ extern "C" void app_main(void) {
     {
         ESP_LOGW(TAG, "no MQTT_CONNECTED_EVENT");
     }
-    while (1)
-    {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+    ESP_LOGI(TAG, "done");
+    // while (1)
+    // {
+    //     vTaskDelay(pdMS_TO_TICKS(1000));
+    // }
     //  mqtt_mng.reset();some error
 }

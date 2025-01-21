@@ -62,7 +62,7 @@ namespace screen
         return ESP_OK;
     }
 
-    esp_err_t max7219_buffer(const buffer_t &buffer)
+    esp_err_t print(const buffer_t &buffer)
     {
         auto transformed = transformation::buffer_by_segment_rotate(buffer, SEGMENT_ROTATION);
         if (SEGMENT_UPSIDEDOWN)
@@ -85,23 +85,6 @@ namespace screen
         buffer[0] = 0xff;
     }
 
-    esp_err_t image(const std::vector<uint8_t> &image)
-    {
-        buffer_t buffer = {0};
-        uint8_t pos = 0;
-        for (const auto &line : image)
-        {
-
-            if (pos >= sizeof(buffer_t))
-            {
-                break;
-            }
-            pos++;
-        }
-
-        return max7219_buffer_raw(buffer);
-    }
-
     void test1()
     {
         auto buffer = transformation::get_test_buffer();
@@ -116,9 +99,9 @@ namespace screen
     void test2()
     {
         auto image = font::get("123");
-        for (int justify = 0; justify <= transformation::js_right; justify++)
+        for (int justify = 0; justify <= js_right; justify++)
         {
-            max7219_buffer(transformation::image2buff(image, 0, static_cast<transformation::justify_t>(justify)));
+            print(transformation::image2buff(image, static_cast<justify_t>(justify), 0));
             vTaskDelay(pdMS_TO_TICKS(2000));
         }
     }
@@ -127,7 +110,13 @@ namespace screen
     {
         auto image = font::get("24:55");
 
-        max7219_buffer(transformation::image2buff(image, 0, transformation::js_center));
+        print(transformation::image2buff(image, js_center, 0));
+    }
+
+    void startup_screen()
+    {
+        auto buffer = transformation::get_test_buffer();
+        print(buffer);
     }
 
     void init()
@@ -155,7 +144,18 @@ namespace screen
         ESP_ERROR_CHECK(max7219_clear(&dev));
 
         ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &echo, NULL));
+        startup_screen();
+    }
 
-        test3();
+    esp_err_t print(const std::vector<uint8_t> &image, const justify_t justify, const uint8_t offset)
+    {
+        const auto buffer = transformation::image2buff(image, justify, offset);
+        return print(buffer);
+    }
+
+    esp_err_t print(const std::string str, const justify_t justify, const uint8_t offset)
+    {
+        const auto image = font::get(str);
+        return print(image, justify, offset);
     }
 }

@@ -24,7 +24,7 @@ const std::vector<uint8_t> glif_3 = {
     0b10001001,
     0b10001001,
     0b11111111,
-    0b01100110,
+    0b01110110,
 };
 
 const std::vector<uint8_t> glif_4 = {

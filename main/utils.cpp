@@ -49,7 +49,7 @@ std::string to_Str(const esp_ip4_addr_t& ip) {
         sstream << static_cast<unsigned>(*ipp);
         ipp++;
         if (sz) {
-            sstream << ':';
+            sstream << '.';
         }
     }
     return sstream.str();

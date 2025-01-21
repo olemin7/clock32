@@ -15,21 +15,21 @@
 namespace sntp
 {
     static const char *TAG = "sntp";
+    std::function<void()> onsync_cb_;
 
     void time_sync_notification_cb(struct timeval *tv)
     {
             ESP_LOGI(TAG, "got Epoch = %lld", tv->tv_sec);
-            time_t now;
-            struct tm timeinfo;
-            time(&now);
+            onsync_cb_();
+            //     time_t now;
+            //     struct tm timeinfo;
+            //     time(&now);
 
-            char strftime_buf[64];
+            //     char strftime_buf[64];
 
-            // Set timezone to Eastern Standard Time and print local time
-
-            localtime_r(&now, &timeinfo);
-            strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-            ESP_LOGI(TAG, "Local time: %s", strftime_buf);
+            //     localtime_r(&now, &timeinfo);
+            //     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+            //     ESP_LOGI(TAG, "Local time: %s", strftime_buf);
     }
 
     static void print_servers(void)
@@ -53,12 +53,13 @@ namespace sntp
             }
     }
 
-    void init()
+    void init(std::function<void()> &&onsync_cb)
     {
             ESP_LOGI(TAG, "init");
             ESP_LOGI(TAG, "CONFIG_TIMEZONE=%s", CONFIG_TIMEZONE);
             setenv("TZ", CONFIG_TIMEZONE, 1);
             tzset();
+            onsync_cb_ = onsync_cb;
 #if LWIP_DHCP_GET_NTP_SRV
         /**
          * NTP server address could be acquired via DHCP,

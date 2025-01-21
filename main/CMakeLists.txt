@@ -8,6 +8,7 @@ idf_component_register(
         "display/font.cpp"
         "display/screen.cpp"
         "display/transformation.cpp"
+        "display/layers.cpp"
         "provision.c"
         "sensors/sensor_event.cpp"
         "sensors/lighting.cpp"

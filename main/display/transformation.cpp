@@ -79,17 +79,26 @@ namespace transformation
     buffer_t get_test_buffer()
     {
         buffer_t buffer;
-        auto pos = buffer.size();
-        while (pos--)
+        uint8_t pos = 0;
+        for (auto &line : buffer)
         {
-            buffer[pos] = 1;
+            if (pos % 8)
+            {
+                line = (1 << (pos / 8)) | 1;
+            }
+            else
+            {
+                line = 0xff;
+            }
+
+            pos++;
         }
-        buffer[0] = 0xff;
+
         return buffer;
     }
 
     buffer_t
-    image2buff(const std::vector<uint8_t> &image, const uint8_t offset, const justify_t justify)
+    image2buff(const std::vector<uint8_t> &image, const justify_t justify, const uint8_t offset)
     {
 
         if (offset > image.size())
