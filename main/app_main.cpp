@@ -33,7 +33,7 @@
 #include "sensors/sensor_event.hpp"
 #include "sensors/htu2x.hpp"
 #include "sensors/lighting.hpp"
-#include "screen.hpp"
+#include "display/screen.hpp"
 
 using namespace std::chrono_literals;
 

@@ -68,7 +68,12 @@
         "stdio.h": "c",
         "format": "cpp",
         "text_encoding": "cpp",
-        "string.h": "c"
+        "string.h": "c",
+        "charconv": "cpp",
+        "map": "cpp",
+        "iomanip": "cpp",
+        "span": "cpp",
+        "set": "cpp"
     },
     "git.ignoreLimitWarning": true
 }
