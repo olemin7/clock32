@@ -28,7 +28,8 @@
 #include "mqtt_wrapper.hpp"
 #include "blink.hpp"
 #include "utils.hpp"
-#include "sntp.hpp"
+#include "time/sntp.hpp"
+#include "time/clock_tm.hpp"
 #include "iot_button.h"
 #include "sensors/sensor_event.hpp"
 #include "sensors/htu2x.hpp"
@@ -41,6 +42,7 @@ using namespace std::chrono_literals;
 layers::layers diplay;
 
 std::unique_ptr<mqtt::CMQTTWrapper>       mqtt_mng;
+std::unique_ptr<clock_tm::clock> clock_ptr = nullptr;
 static const char *TAG = "main";
 
 static EventGroupHandle_t app_main_event_group;
@@ -127,10 +129,22 @@ extern "C" void app_main(void)
     blink::start(blink::BLINK_PROVISIONING);
     provision_main();
     ESP_LOGI(TAG, "started");
-    blink::start(blink::BLINK_PROVISIONED);
-    xEventGroupWaitBits(app_main_event_group, GOT_IP, pdTRUE, pdTRUE,
-                        portMAX_DELAY);
-    sntp::init({});
+    blink::stop(blink::BLINK_PROVISIONING);
+    blink::start(blink::BLINK_CONNECTING);
+    xEventGroupWaitBits(app_main_event_group, GOT_IP, pdTRUE, pdTRUE, portMAX_DELAY);
+    blink::stop(blink::BLINK_CONNECTING);
+    sntp::init([]()
+               {
+
+        if (!clock_ptr)
+        {
+            clock_ptr = std::make_unique<clock_tm::clock>([](auto timeinfo)
+                                                          {
+            char buffMin[6];
+            sprintf(buffMin, "%2u:%02u", timeinfo.tm_hour,  timeinfo.tm_min);
+            diplay.show(5, buffMin, screen::js_center);
+            ESP_LOGI(TAG, "clock %s",buffMin); });
+        } });
 
     mqtt_mng =
         std::make_unique<mqtt::CMQTTWrapper>([]()

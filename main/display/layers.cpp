@@ -48,7 +48,7 @@ namespace layers
     void layers::show(uint8_t priority, std::unique_ptr<idata> &&obj)
     {
 
-        const auto need_draw = (get_max_priority() <= priority);
+        const auto need_draw = (get_max_priority().value_or(0) <= priority);
 
         layers_[priority] = std::move(obj);
         if (need_draw)
@@ -57,8 +57,18 @@ namespace layers
         }
     }
 
-    void layers::cancel(uint8_t level)
+    void layers::cancel(uint8_t priority)
     {
+        const auto need_draw = (get_max_priority() == priority);
+        layers_.erase(priority);
+        if (need_draw)
+        {
+            auto priority = get_max_priority();
+            if (priority)
+            {
+                draw(priority.value());
+            }
+        }
     }
 
     void layers::show(uint8_t priority, const std::string str, const screen::justify_t justify, const uint8_t offset)

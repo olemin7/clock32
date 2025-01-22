@@ -138,7 +138,7 @@ namespace blink {
     {
         if (led_handle != NULL)
         {
-            ESP_LOGI(TAG, "start blink: %d", static_cast<int>(state));
+            ESP_LOGI(TAG, "stop blink: %d", static_cast<int>(state));
             led_indicator_stop(led_handle, static_cast<int>(state));
         }
     }

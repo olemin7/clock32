@@ -42,7 +42,7 @@ namespace screen
         {
             pre_level = brightness;
             max7219_set_brightness(&dev, pre_level);
-            ESP_LOGI(TAG, "brightness=%u", pre_level);
+            ESP_LOGD(TAG, "brightness=%u", pre_level);
         }
     }
 
