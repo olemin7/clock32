@@ -25,6 +25,7 @@ const static char *TAG = "LIGHTING";
 namespace lighting
 {
     using namespace sensor_event;
+    static auto pre_val = int{-1};
     void task(void *pvParameter)
     {
         ESP_LOGI(TAG, "init");
@@ -43,13 +44,13 @@ namespace lighting
             .bitwidth = ADC_BITWIDTH_DEFAULT,
         };
         ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &config));
-        auto pre_val = int{-1};
+
         while (1)
         {
             sensor_event::lighting_t val;
             ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &val.raw));
             ESP_LOGD(TAG, "ADC Raw Data: %d", val.raw);
-            if (std::abs(pre_val - val.raw) > CONFIG_LIGHTING_NOISE)
+            if (std::abs(pre_val - val.raw) > CONFIG_LIGHTING_THRESHOLD)
             {
                 pre_val = val.raw;
                 auto raw = val.raw;

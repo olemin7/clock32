@@ -1,11 +1,11 @@
 idf_component_register(
     SRCS
         "app_main.cpp" 
-        "mqtt_wrapper.cpp" 
-        "blink.cpp" 
+        "mqtt/mqtt_wrapper.cpp" 
         "utils.cpp" 
         "time/sntp.cpp"
         "time/clock_tm.cpp"
+        "display/blink.cpp" 
         "display/font.cpp"
         "display/screen.cpp"
         "display/transformation.cpp"

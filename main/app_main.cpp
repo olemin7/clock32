@@ -25,8 +25,8 @@
 
 #include "json_helper.hpp"
 #include "provision.h"
-#include "mqtt_wrapper.hpp"
-#include "blink.hpp"
+#include "mqtt/mqtt_wrapper.hpp"
+#include "display/blink.hpp"
 #include "utils.hpp"
 #include "time/sntp.hpp"
 #include "time/clock_tm.hpp"
@@ -41,18 +41,18 @@ using namespace std::chrono_literals;
 
 layers::layers diplay;
 
-std::unique_ptr<mqtt::CMQTTWrapper>       mqtt_mng;
+std::unique_ptr<mqtt::CMQTTWrapper>       mqtt_mng = nullptr;
 std::unique_ptr<clock_tm::clock> clock_ptr = nullptr;
+button_handle_t btn_ptr = nullptr;
 static const char *TAG = "main";
 
 static EventGroupHandle_t app_main_event_group;
 constexpr int GOT_IP = BIT0;
-constexpr int MQTT_CONNECTED_EVENT = BIT1;
 
 static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
     ESP_LOGI(TAG, "Connected with IP Address: %s", utils::to_Str(event->ip_info.ip).c_str());
-    diplay.show(5, utils::to_Str(event->ip_info.ip), screen::js_right);
+    diplay.show(4, utils::to_Str(event->ip_info.ip), screen::js_right);
 
     /* Signal main application to continue execution */
     xEventGroupSetBits(app_main_event_group, GOT_IP);
@@ -76,6 +76,24 @@ static void button_event_cb(void *arg, void *data)
     ESP_LOGW(TAG, "REQ REPROVISION");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     esp_restart();
+}
+
+void mqtt_temperature(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+{
+    if (mqtt_mng)
+    {
+        const auto event = (sensor_event::temperature_t *)event_data;
+        mqtt_mng->publish("sensors", "temperature", event->val);
+    }
+}
+
+void mqtt_humidity(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+{
+    if (mqtt_mng)
+    {
+        const auto event = (sensor_event::humidity_t *)event_data;
+        mqtt_mng->publish("sensors", "humidity", event->val);
+    }
 }
 
 void init()
@@ -113,12 +131,12 @@ void init()
             .active_level = BUTTON_ACTIVE_LEVEL,
         },
     };
-    button_handle_t btn = iot_button_create(&btn_cfg);
-    assert(btn);
-    ESP_ERROR_CHECK(iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
+    button_handle_t btn_ptr = iot_button_create(&btn_cfg);
+    assert(btn_ptr);
+    ESP_ERROR_CHECK(iot_button_register_cb(btn_ptr, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
 
-    //   htu2x::init();
-    lighting::init();
+    htu2x::init();
+    // lighting::init();
 }
 
 extern "C" void app_main(void)
@@ -126,10 +144,14 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "[APP] Startup..");
     utils::print_info();
     init();
+
+    //------------------------------
     blink::start(blink::BLINK_PROVISIONING);
     provision_main();
     ESP_LOGI(TAG, "started");
     blink::stop(blink::BLINK_PROVISIONING);
+    //------------------------------
+
     blink::start(blink::BLINK_CONNECTING);
     xEventGroupWaitBits(app_main_event_group, GOT_IP, pdTRUE, pdTRUE, portMAX_DELAY);
     blink::stop(blink::BLINK_CONNECTING);
@@ -146,26 +168,9 @@ extern "C" void app_main(void)
             ESP_LOGI(TAG, "clock %s",buffMin); });
         } });
 
-    mqtt_mng =
-        std::make_unique<mqtt::CMQTTWrapper>([]()
-                                             { xEventGroupSetBits(app_main_event_group, MQTT_CONNECTED_EVENT); });
+    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>();
+    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &mqtt_temperature, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &mqtt_humidity, NULL));
 
-    const auto uxBits = xEventGroupWaitBits(app_main_event_group, MQTT_CONNECTED_EVENT, pdTRUE, pdTRUE,
-                                            pdMS_TO_TICKS(10000));
-
-    ESP_LOGI(TAG, "wrapping");
-    if (uxBits & MQTT_CONNECTED_EVENT)
-    {
-        ESP_LOGI(TAG, "flush %d", mqtt_mng->flush(5s));
-    }
-    else
-    {
-        ESP_LOGW(TAG, "no MQTT_CONNECTED_EVENT");
-    }
     ESP_LOGI(TAG, "done");
-    // while (1)
-    // {
-    //     vTaskDelay(pdMS_TO_TICKS(1000));
-    // }
-    //  mqtt_mng.reset();some error
 }

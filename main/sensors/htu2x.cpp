@@ -11,12 +11,20 @@
 #include <freertos/task.h>
 #include <si7021.h>
 #include <string.h>
+#include <chrono>
 #include "esp_log.h"
 #include "sensor_event.hpp"
+#include "average_treshold.hpp"
+#include "utils.hpp"
 
+using namespace std::chrono_literals;
 static const char *TAG = "si7021";
 
-static void task(void *pvParameters)
+constexpr auto TEMPERATURE_THRESHOLD = 0.1;
+constexpr auto HUMIDITY_THRESHOLD = 0.5;
+
+static void
+task(void *pvParameters)
 {
     i2c_dev_t dev;
     memset(&dev, 0, sizeof(i2c_dev_t));
@@ -50,42 +58,44 @@ static void task(void *pvParameters)
     }
     printf("\nSerial number: 0x%08" PRIx32 "%08" PRIx32 "\n", (uint32_t)(serial >> 32), (uint32_t)serial);
 
-    esp_err_t res;
-
-    /* wait for the device to boot. HTU21D sometimes fails to return data
-     * at the initial reading. the datasheet does not say anything about
-     * startup sequence. */
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    utils::average_treshold_timeout<float, float> temperature_filter(TEMPERATURE_THRESHOLD, 3, 10s);
+    utils::average_treshold_timeout<float, float> humidity_filter(HUMIDITY_THRESHOLD, 3, 20s);
 
     while (1)
     {
-        /* float is used in printf(). you need non-default configuration in
-         * sdkconfig for ESP8266, which is enabled by default for this
-         * example. see sdkconfig.defaults.esp8266
-         */
-        sensor_event::temperature_t temperature;
-        res = si7021_measure_temperature(&dev, &temperature.val);
+        esp_err_t res;
+        float temperature;
+        res = si7021_measure_temperature(&dev, &temperature);
         if (res != ESP_OK)
         {
             ESP_LOGE(TAG, "Could not measure temperature: %d (%s)", res, esp_err_to_name(res));
         }
         else
         {
-            ESP_LOGD(TAG, "Temperature: %.2f", temperature.val);
-            ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::internall_temperature, &temperature, sizeof(temperature), portMAX_DELAY));
+            ESP_LOGD(TAG, "Temperature: %.2f", temperature);
+            if (temperature_filter.push(temperature))
+            {
+                sensor_event::temperature_t event;
+                event.val = utils::trimm(temperature_filter.get_average(), 1);
+                ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::internall_temperature, &event, sizeof(event), portMAX_DELAY));
+            }
         }
 
-        sensor_event::humidity_t humidity;
-
-        res = si7021_measure_humidity(&dev, &humidity.val);
+        float humidity;
+        res = si7021_measure_humidity(&dev, &humidity);
         if (res != ESP_OK)
         {
             ESP_LOGE(TAG, "Could not measure humidity: %d (%s)", res, esp_err_to_name(res));
         }
         else
         {
-            ESP_LOGD(TAG, "Humidity: %.2f", temperature.val);
-            ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::internall_humidity, &humidity, sizeof(humidity), portMAX_DELAY));
+            ESP_LOGD(TAG, "Humidity: %.2f", humidity);
+            if (humidity_filter.push(humidity))
+            {
+                sensor_event::humidity_t event;
+                event.val = utils::trimm(humidity_filter.get_average(), 1);
+                ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::internall_humidity, &event, sizeof(event), portMAX_DELAY));
+            }
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -107,9 +117,9 @@ void echo_humidity(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*ev
 void htu2x::init()
 {
     ESP_ERROR_CHECK(i2cdev_init());
-#if 1
-    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &echo_temperature, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &echo_humidity, NULL));
-#endif
+
+    // ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &echo_temperature, NULL));
+    // ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &echo_humidity, NULL));
+
     xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE * 8, NULL, 5, NULL);
 }

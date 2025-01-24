@@ -9,6 +9,7 @@
 #include <functional>
 #include <string>
 #include "esp_netif_ip_addr.h"
+#include <cmath>
 
 namespace utils {
 std::string num_to_hex_string(const uint8_t* input, size_t size, char separator = 0);
@@ -32,4 +33,5 @@ class generic_sensor {
     cb_t cb_;
 };
 
+float trimm(float in, uint8_t decimals);
 } // namespace utils

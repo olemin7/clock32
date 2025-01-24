@@ -48,6 +48,17 @@ Check the values in your sdkconfig for LOG_MAXIMUM_LEVEL. It defaults to matchin
 
 
 [mqtt test]
+sudo apt-get install mosquitto mosquitto-clients
+
+sudo vim /etc/mosquitto/mosquitto.conf 
+add
+  listener 1883 0.0.0.0
+  allow_anonymous true
+
+sudo ufw allow 1883
+
+sudo /etc/init.d/mosquitto restart
+
 one terminal
 mosquitto_sub -d -t hello/world
 mosquitto_sub -d -t stat/weather -h central.local

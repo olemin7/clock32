@@ -84,4 +84,11 @@ void print_info()
     ESP_LOGI(TAG, "IDF version: %s", esp_get_idf_version());
 }
 
+float trimm(float in, uint8_t decimals)
+{
+    const auto mult = std::pow(10, decimals);
+    const auto tmp = static_cast<int32_t>(in * mult);
+    return static_cast<float>(tmp) / mult;
+}
+
 } // namespace utils

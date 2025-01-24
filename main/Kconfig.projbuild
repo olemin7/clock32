@@ -159,7 +159,7 @@ menu "App Configuration"
             default 200
             help
                 LIGHTING_REFRESH ms
-        config LIGHTING_NOISE
+        config LIGHTING_THRESHOLD
             int
             default 10
         config LIGHTING_MAX_RAW
