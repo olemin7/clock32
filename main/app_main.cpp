@@ -136,7 +136,7 @@ void init()
     ESP_ERROR_CHECK(iot_button_register_cb(btn_ptr, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
 
     htu2x::init();
-    // lighting::init();
+    lighting::init();
 }
 
 extern "C" void app_main(void)
