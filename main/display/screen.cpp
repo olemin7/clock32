@@ -9,13 +9,11 @@
 #include "sensors/sensor_event.hpp"
 #include "font.hpp"
 #include "transformation.hpp"
+#include "sdkconfig.h"
 
 namespace screen
 {
     static const char *TAG = "SCREEN";
-    constexpr auto SEGMENT_ROTATION = 3;
-    constexpr auto SEGMENT_UPSIDEDOWN = false;
-    constexpr auto DISPLAYS_MIRRORED = false;
 
     max7219_t dev;
 
@@ -64,8 +62,8 @@ namespace screen
 
     esp_err_t print(const buffer_t &buffer)
     {
-        auto transformed = transformation::buffer_by_segment_rotate(buffer, SEGMENT_ROTATION);
-        if (SEGMENT_UPSIDEDOWN)
+        auto transformed = transformation::buffer_by_segment_rotate(buffer, CONFIG_DISPLAY_SEGMENT_ROTATION);
+        if (CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN)
         {
             for (auto &line : transformed)
             {
@@ -85,7 +83,7 @@ namespace screen
         buffer[0] = 0xff;
     }
 
-    void test1()
+    void test_rotation()
     {
         auto buffer = transformation::get_test_buffer();
         for (int i = 0; i < 4; i++)
@@ -136,14 +134,15 @@ namespace screen
         // Configure device
         dev = max7219_t{
             .digits = 0,
-            .cascade_size = CONFIG_EXAMPLE_CASCADE_SIZE,
-            .mirrored = DISPLAYS_MIRRORED,
+            .cascade_size = SEGMENTS,
+            .mirrored = CONFIG_DISPLAY_MIRRORED,
         };
         ESP_ERROR_CHECK(max7219_init_desc(&dev, SPI2_HOST, MAX7219_MAX_CLOCK_SPEED_HZ, GPIO_NUM_5));
         ESP_ERROR_CHECK(max7219_init(&dev));
         ESP_ERROR_CHECK(max7219_clear(&dev));
 
         ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &echo, NULL));
+        //        test_rotation();
         startup_screen();
     }
 

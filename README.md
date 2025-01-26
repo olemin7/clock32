@@ -87,7 +87,7 @@ git clone git@github.com:UncleRus/esp-idf-lib.git
 
 [adc]
 https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/peripherals/adc.html
-#photoresistor (+3.3) -photoresistor- (A0) -resistor 10k- (GND)
+#photoresistor (GND ) -photoresistor- (A0) -resistor 10k- (+3.3)
 
 https://esp32tutorials.com/esp32-esp-idf-max7219-dot-matrix-display
 
