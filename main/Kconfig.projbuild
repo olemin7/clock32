@@ -62,7 +62,7 @@ menu "App Configuration"
         default 1 if EXAMPLE_PROV_TRANSPORT_BLE
         default 2 if EXAMPLE_PROV_TRANSPORT_SOFTAP
 
-    config EXAMPLE_RESET_PROVISIONED
+    config PROV_RESET
         bool
         default n
         prompt "Reset provisioned status of the device"
@@ -87,12 +87,6 @@ menu "App Configuration"
             Set the Maximum retry to avoid reconnecting to an inexistent AP or if credentials
             are misconfigured. Provisioned credentials are erased and internal state machine
             is reset after this threshold is reached.
-
-    config EXAMPLE_PROV_SHOW_QR
-        bool "Show provisioning QR code"
-        default y
-        help
-            Show the QR code for provisioning.
 
     config EXAMPLE_PROV_USING_BLUEDROID
         bool

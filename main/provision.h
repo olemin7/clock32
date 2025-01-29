@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 void provision_main(void);
-
+esp_err_t provision_reset(void);
 #ifdef __cplusplus
 }
 #endif

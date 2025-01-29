@@ -28,7 +28,6 @@
 #ifdef CONFIG_EXAMPLE_PROV_TRANSPORT_SOFTAP
 #include <wifi_provisioning/scheme_softap.h>
 #endif /* CONFIG_EXAMPLE_PROV_TRANSPORT_SOFTAP */
-#include "qrcode.h"
 
 static const char* TAG = "provisioning";
 
@@ -65,6 +64,11 @@ static const char sec2_verifier[] = { 0x7c, 0x7c, 0x85, 0x47, 0x65, 0x08, 0x94, 
     0xc5, 0xc5, 0x32, 0x29, 0x3e, 0x71, 0x64, 0x9e, 0xde, 0x8c, 0xf6, 0x75, 0xa1, 0xe6, 0xf6, 0x53, 0xc8, 0x31, 0xa8,
     0x78, 0xde, 0x50, 0x40, 0xf7, 0x62, 0xde, 0x36, 0xb2, 0xba };
 #endif
+
+esp_err_t provision_reset(void)
+{
+    return wifi_prov_mgr_reset_provisioning();
+}
 
 static esp_err_t example_get_sec2_salt(const char** salt, uint16_t* salt_len) {
 #if CONFIG_EXAMPLE_PROV_SEC2_DEV_MODE
@@ -257,11 +261,6 @@ static void wifi_prov_print_qr(const char* name, const char* username, const cha
             ",\"transport\":\"%s\"}",
             PROV_QR_VERSION, name, transport);
     }
-#ifdef CONFIG_EXAMPLE_PROV_SHOW_QR
-    ESP_LOGI(TAG, "Scan this QR code from the provisioning application for Provisioning.");
-    esp_qrcode_config_t cfg = ESP_QRCODE_CONFIG_DEFAULT();
-    esp_qrcode_generate(&cfg, payload);
-#endif /* CONFIG_APP_WIFI_PROV_SHOW_QR */
     ESP_LOGI(TAG, "If QR code is not visible, copy paste the below URL in a browser.\n%s?data=%s", QRCODE_BASE_URL,
         payload);
 }
@@ -316,8 +315,8 @@ void provision_main(void) {
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
 
     bool provisioned = false;
-#ifdef CONFIG_EXAMPLE_RESET_PROVISIONED
-    wifi_prov_mgr_reset_provisioning();
+#ifdef CONFIG_PROV_RESET
+    provision_reset();
 #else
     /* Let's find out if the device is provisioned */
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
@@ -450,18 +449,6 @@ void provision_main(void) {
          * has already been created above.
          */
         wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
-
-        /* Uncomment the following to wait for the provisioning to finish and then release
-         * the resources of the manager. Since in this case de-initialization is triggered
-         * by the default event loop handler, we don't need to call the following */
-        // wifi_prov_mgr_wait();
-        // wifi_prov_mgr_deinit();
-        /* Print QR code for provisioning */
-#ifdef CONFIG_EXAMPLE_PROV_TRANSPORT_BLE
-        wifi_prov_print_qr(service_name, username, pop, PROV_TRANSPORT_BLE);
-#else /* CONFIG_EXAMPLE_PROV_TRANSPORT_SOFTAP */
-        wifi_prov_print_qr(service_name, username, pop, PROV_TRANSPORT_SOFTAP);
-#endif /* CONFIG_EXAMPLE_PROV_TRANSPORT_BLE */
     } else {
         ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
 

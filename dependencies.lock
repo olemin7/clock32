@@ -85,13 +85,6 @@ dependencies:
       registry_url: https://components.espressif.com/
       type: service
     version: 0.2.0
-  espressif/qrcode:
-    component_hash: 3b493771bc5d6ad30cbf87c25bf784aada8a08c941504355b55d6b75518ed7bc
-    dependencies: []
-    source:
-      registry_url: https://components.espressif.com/
-      type: service
-    version: 0.1.0~2
   idf:
     source:
       type: idf
@@ -102,8 +95,7 @@ direct_dependencies:
 - espressif/esp_mqtt_cxx
 - espressif/led_indicator
 - espressif/network_provisioning
-- espressif/qrcode
 - idf
-manifest_hash: 52043ac06c3854218c37c97afae7807e200616a51dafe4e350bd49be1cd07441
+manifest_hash: 09b7bba3e5629d46efe4925e34fa41067ba3cd19d63751a5fabdb15f28ae49f4
 target: esp32c3
 version: 2.0.0

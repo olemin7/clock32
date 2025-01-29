@@ -70,6 +70,8 @@ static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t
 static void button_event_cb(void *arg, void *data)
 {
     ESP_LOGW(TAG, "REQ REPROVISION");
+    diplay.show(10, "***");
+    ESP_ERROR_CHECK(provision_reset());
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     esp_restart();
 }
@@ -131,7 +133,7 @@ void init()
 
     button_config_t btn_cfg = {
         .type = BUTTON_TYPE_GPIO,
-        .long_press_time = 0,
+        .long_press_time = 5 * 1000,
         .short_press_time = 0,
         .gpio_button_config = {
             .gpio_num = BOOT_BUTTON_NUM,
@@ -141,8 +143,6 @@ void init()
     button_handle_t btn_ptr = iot_button_create(&btn_cfg);
     assert(btn_ptr);
     ESP_ERROR_CHECK(iot_button_register_cb(btn_ptr, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
-
-    htu2x::init();
     lighting::init();
 }
 
@@ -166,6 +166,7 @@ extern "C" void app_main(void)
     blink::start(blink::BLINK_CONNECTING);
     xEventGroupWaitBits(app_main_event_group, GOT_IP, pdTRUE, pdTRUE, portMAX_DELAY);
     blink::stop(blink::BLINK_CONNECTING);
+    htu2x::init();
     sntp::init([]()
                {
         if (!clock_ptr)
