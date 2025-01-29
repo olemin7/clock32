@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="mm" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="mm"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="16" fill="1" visible="no" active="no"/>
@@ -5038,10 +5038,10 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <library name="ESP32">
 <packages>
 <package name="ESP32C3_SMD">
-<wire x1="0" y1="0" x2="18" y2="0" width="0.1524" layer="21"/>
-<wire x1="18" y1="0" x2="18" y2="22.52" width="0.1524" layer="21"/>
+<wire x1="0" y1="-1.27" x2="18" y2="-1.27" width="0.1524" layer="21"/>
+<wire x1="18" y1="-1.27" x2="18" y2="22.52" width="0.1524" layer="21"/>
 <wire x1="18" y1="22.52" x2="0" y2="22.52" width="0.1524" layer="21"/>
-<wire x1="0" y1="22.52" x2="0" y2="0" width="0.1524" layer="21"/>
+<wire x1="0" y1="22.52" x2="0" y2="-1.27" width="0.1524" layer="21"/>
 <text x="5.08" y="10.16" size="1.778" layer="21">ESP32
 c3</text>
 <wire x1="5.08" y1="24.13" x2="5.08" y2="20.32" width="0.1524" layer="21"/>

@@ -1449,10 +1449,10 @@ for trimmer refence see : &lt;u&gt;www.electrospec-inc.com/cross_references/trim
 <library name="ESP32">
 <packages>
 <package name="ESP32C3_SMD">
-<wire x1="0" y1="0" x2="18" y2="0" width="0.1524" layer="21"/>
-<wire x1="18" y1="0" x2="18" y2="22.52" width="0.1524" layer="21"/>
+<wire x1="0" y1="-1.27" x2="18" y2="-1.27" width="0.1524" layer="21"/>
+<wire x1="18" y1="-1.27" x2="18" y2="22.52" width="0.1524" layer="21"/>
 <wire x1="18" y1="22.52" x2="0" y2="22.52" width="0.1524" layer="21"/>
-<wire x1="0" y1="22.52" x2="0" y2="0" width="0.1524" layer="21"/>
+<wire x1="0" y1="22.52" x2="0" y2="-1.27" width="0.1524" layer="21"/>
 <text x="5.08" y="10.16" size="1.778" layer="21">ESP32
 c3</text>
 <wire x1="5.08" y1="24.13" x2="5.08" y2="20.32" width="0.1524" layer="21"/>
@@ -1704,9 +1704,9 @@ c3</text>
 <signal name="N$11">
 <contactref element="JP_DISPLAY" pad="5"/>
 <contactref element="U$2" pad="4"/>
-<wire x1="8.69" y1="1.48" x2="3.81" y2="6.36" width="0.6" layer="16"/>
-<wire x1="3.81" y1="10.16" x2="3.81" y2="6.36" width="0.6" layer="16"/>
-<wire x1="17.92" y1="1.48" x2="8.69" y2="1.48" width="0.6" layer="16"/>
+<wire x1="11.23" y1="1.48" x2="3.81" y2="8.9" width="0.6" layer="16"/>
+<wire x1="3.81" y1="10.16" x2="3.81" y2="8.9" width="0.6" layer="16"/>
+<wire x1="17.92" y1="1.48" x2="11.23" y2="1.48" width="0.6" layer="16"/>
 <wire x1="27.67" y1="11.23" x2="17.92" y2="1.48" width="0.6" layer="16"/>
 <wire x1="33.02" y1="11.43" x2="32.82" y2="11.23" width="0.6" layer="16"/>
 <wire x1="32.82" y1="11.23" x2="27.67" y2="11.23" width="0.6" layer="16"/>
