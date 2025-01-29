@@ -18,7 +18,8 @@ namespace screen
     {
         js_left,
         js_center,
-        js_right
+        js_right,
+        js_fill,
     };
 
     void init();

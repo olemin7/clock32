@@ -19,13 +19,14 @@
 #include "esp_system.h"
 #include "sdkconfig.h"
 #include "sensor_event.hpp"
+#include "average_treshold.hpp"
 
 const static char *TAG = "LIGHTING";
 
 namespace lighting
 {
     using namespace sensor_event;
-    static auto pre_val = int{-1};
+    using namespace std::chrono_literals;
     void task(void *pvParameter)
     {
         ESP_LOGI(TAG, "init");
@@ -44,43 +45,60 @@ namespace lighting
             .bitwidth = ADC_BITWIDTH_DEFAULT,
         };
         ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &config));
-
+        utils::average_treshold_timeout<uint16_t, uint32_t> lighting_filter(CONFIG_LIGHTING_THRESHOLD, 3, 20s);
         while (1)
         {
-            sensor_event::lighting_t val;
-            ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &val.raw));
-            ESP_LOGD(TAG, "ADC Raw Data: %d", val.raw);
-            if (std::abs(pre_val - val.raw) > CONFIG_LIGHTING_THRESHOLD)
+            int raw;
+            ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &raw));
+            if (raw) // to mitigate issue WiFi affects ADC1 raw data (IDFGH-6623) espressif/esp-idf#8266
             {
-                pre_val = val.raw;
-                auto raw = val.raw;
+                uint16_t lux;
                 if (raw > CONFIG_LIGHTING_MAX_RAW)
                 {
-                    raw = CONFIG_LIGHTING_MAX_RAW;
+                    lux = LUX_MIN; // inverted
                 }
                 else if (raw < CONFIG_LIGHTING_MIN_RAW)
                 {
-                    raw = CONFIG_LIGHTING_MIN_RAW;
+                    lux = LUX_MAX; // inverted
+                }
+                else
+                {
+                    lux = (LUX_MAX - LUX_MIN) * (CONFIG_LIGHTING_MAX_RAW - raw) / (CONFIG_LIGHTING_MAX_RAW - CONFIG_LIGHTING_MIN_RAW) + LUX_MIN;
                 }
 
-                val.lux = (LUX_MAX - LUX_MIN) * (CONFIG_LIGHTING_MAX_RAW - raw) / (CONFIG_LIGHTING_MAX_RAW - CONFIG_LIGHTING_MIN_RAW) + LUX_MIN;
-                ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::lighting, &val, sizeof(val), portMAX_DELAY));
+                ESP_LOGD(TAG, "ADC raw=%d,lux=%d", raw, lux);
+                if (lighting_filter.push(lux))
+                {
+                    lighting_t event;
+                    event.val = lighting_filter.get_average();
+                    ESP_LOGD(TAG, "ADC lux: %d", event.val);
+                    ESP_ERROR_CHECK(esp_event_post(sensor_event::event, sensor_event::lighting, &event, sizeof(event), portMAX_DELAY));
+                }
+                vTaskDelay(pdMS_TO_TICKS(CONFIG_LIGHTING_REFRESH));
             }
-            vTaskDelay(pdMS_TO_TICKS(CONFIG_LIGHTING_REFRESH));
+            else
+            {
+                vTaskDelay(pdMS_TO_TICKS(CONFIG_LIGHTING_REFRESH / 2));
+            }
         }
     }
 
-    void echo(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+#if 0
+   void echo(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
     {
         const auto update = (sensor_event::lighting_t *)event_data;
 
         ESP_LOGI(TAG, "adc=%d, lux=%u", update->raw, update->lux);
     }
+.... 
+ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &echo, NULL));
+
+#endif
 
     void init()
     {
         ESP_LOGI(TAG, "starting");
-        //  ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &echo, NULL));
+        //  esp_log_level_set(TAG, ESP_LOG_DEBUG);
         xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE + 1024, NULL, 5, NULL);
     }
 }

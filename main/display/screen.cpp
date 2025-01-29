@@ -35,7 +35,7 @@ namespace screen
         static auto pre_level = uint8_t{0};
         const auto update = (sensor_event::lighting_t *)event_data;
 
-        const auto brightness = lighting_to_brightness(update->lux);
+        const auto brightness = lighting_to_brightness(update->val);
         if (brightness != pre_level)
         {
             pre_level = brightness;
@@ -73,16 +73,6 @@ namespace screen
         return max7219_buffer_raw(transformed);
     }
 
-    void get_test_buffer(buffer_t &buffer)
-    {
-        auto pos = sizeof(buffer_t);
-        while (pos--)
-        {
-            buffer[pos] = 1;
-        }
-        buffer[0] = 0xff;
-    }
-
     void test_rotation()
     {
         auto buffer = transformation::get_test_buffer();
@@ -92,23 +82,6 @@ namespace screen
             max7219_buffer_raw(transformation::buffer_by_segment_rotate(buffer, i));
             vTaskDelay(pdMS_TO_TICKS(2000));
         }
-    }
-
-    void test2()
-    {
-        auto image = font::get("123");
-        for (int justify = 0; justify <= js_right; justify++)
-        {
-            print(transformation::image2buff(image, static_cast<justify_t>(justify), 0));
-            vTaskDelay(pdMS_TO_TICKS(2000));
-        }
-    }
-
-    void test3()
-    {
-        auto image = font::get("24:55");
-
-        print(transformation::image2buff(image, js_center, 0));
     }
 
     void startup_screen()

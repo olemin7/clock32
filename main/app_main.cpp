@@ -36,6 +36,7 @@
 #include "sensors/lighting.hpp"
 #include "display/screen.hpp"
 #include "display/layers.hpp"
+#include "display/tests.hpp"
 
 using namespace std::chrono_literals;
 
@@ -48,25 +49,20 @@ static const char *TAG = "main";
 
 static EventGroupHandle_t app_main_event_group;
 constexpr int GOT_IP = BIT0;
+mqtt::device_info_t device_info;
 
 static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
-    ESP_LOGI(TAG, "Connected with IP Address: %s", utils::to_Str(event->ip_info.ip).c_str());
-    diplay.show(4, utils::to_Str(event->ip_info.ip), screen::js_right);
+    device_info.ip = utils::to_Str(event->ip_info.ip);
+
+    ESP_LOGI(TAG, "Connected with IP Address: %s", device_info.ip.c_str());
+    diplay.show(4, device_info.ip, screen::js_right);
 
     /* Signal main application to continue execution */
     xEventGroupSetBits(app_main_event_group, GOT_IP);
 
-    // auto json_obj = json::CreateObject();
-    // cJSON_AddStringToObject(json_obj.get(), "app_name", CONFIG_APP_NAME);
-    // cJSON_AddStringToObject(json_obj.get(), "ip", utils::to_Str(event->ip_info.ip).c_str());
-    // int rssi;
-    // ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&rssi));
-    // cJSON_AddNumberToObject(json_obj.get(), "rssi", rssi);
-
-    // cJSON_AddStringToObject(json_obj.get(), "mac", utils::get_mac().c_str());
-
-    // mqtt_mng->publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, PrintUnformatted(json_obj));
+    ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&device_info.rssi));
+    device_info.mac = utils::get_mac();
 }
 
 #define BOOT_BUTTON_NUM 9
@@ -78,26 +74,37 @@ static void button_event_cb(void *arg, void *data)
     esp_restart();
 }
 
-void mqtt_temperature(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+template <typename T>
+void mqtt_send_sensor(const std::string &field, T value)
 {
     if (mqtt_mng)
     {
-        const auto event = (sensor_event::temperature_t *)event_data;
-        mqtt_mng->publish("sensors", "temperature", event->val);
+        mqtt_mng->publish_device_brunch("sensors", field, value);
     }
+}
+
+void mqtt_temperature(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+{
+    const auto event = (sensor_event::temperature_t *)event_data;
+    mqtt_send_sensor("temperature", event->val);
 }
 
 void mqtt_humidity(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
 {
-    if (mqtt_mng)
-    {
-        const auto event = (sensor_event::humidity_t *)event_data;
-        mqtt_mng->publish("sensors", "humidity", event->val);
-    }
+    const auto event = (sensor_event::humidity_t *)event_data;
+    mqtt_send_sensor("humidity", event->val);
+}
+
+void mqtt_lighting(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
+{
+    const auto event = (sensor_event::lighting_t *)event_data;
+    mqtt_send_sensor("lighting", event->val);
 }
 
 void init()
 {
+    device_info.sw = CONFIG_APP_NAME " " __DATE__ " " __TIME__;
+    utils::print_info();
     // Create a default event loop
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     app_main_event_group = xEventGroupCreate();
@@ -139,11 +146,15 @@ void init()
     lighting::init();
 }
 
+/************************************
+ *
+ */
+
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "[APP] Startup..");
-    utils::print_info();
     init();
+    //  screen::tests();
 
     //------------------------------
     blink::start(blink::BLINK_PROVISIONING);
@@ -157,20 +168,21 @@ extern "C" void app_main(void)
     blink::stop(blink::BLINK_CONNECTING);
     sntp::init([]()
                {
-
         if (!clock_ptr)
         {
             clock_ptr = std::make_unique<clock_tm::clock>([](auto timeinfo)
                                                           {
             char buffMin[6];
-            sprintf(buffMin, "%2u:%02u", timeinfo.tm_hour,  timeinfo.tm_min);
+            sprintf(buffMin, "%u:%02u", timeinfo.tm_hour, timeinfo.tm_min);
             diplay.show(5, buffMin, screen::js_center);
             ESP_LOGI(TAG, "clock %s",buffMin); });
         } });
 
-    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>();
+    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info);
+    //--------------------------------
     ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &mqtt_temperature, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &mqtt_humidity, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &mqtt_lighting, NULL));
 
     ESP_LOGI(TAG, "done");
 }

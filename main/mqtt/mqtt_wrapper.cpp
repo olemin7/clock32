@@ -27,24 +27,13 @@ namespace mqtt
     constexpr auto *TAG = "MQTT";
     constexpr int EMPTY_QUEUE = BIT0;
 
-    CMQTTWrapper::CMQTTWrapper()
+    CMQTTWrapper::CMQTTWrapper(device_info_t &device_info)
         : imqtt::Client(imqtt::BrokerConfiguration{.address = {imqtt::URI{std::string{CONFIG_BROKER_URL}}},
                                                    .security = imqtt::Insecure{}},
-                        {}, {.connection = {.disable_auto_reconnect = true}})
+                        {}, {.connection = {.disable_auto_reconnect = true}}),
+          device_info_(device_info)
     {
-        ESP_LOGD(TAG, "mqtt_wrapper ctor");
         ESP_LOGI(TAG, "CONFIG_BROKER_URL %s", CONFIG_BROKER_URL);
-
-        // ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, [this](void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
-        //                                            {
-        //                                            if (is_connected_){
-        //                                                 const auto temperature = (sensor_event::temperature_t *)event_data;
-        //                                                     ESP_LOGI(TAG, "temperature=%f", temperature->val);
-        //                                              std::stringstream ss;
-        //                                              ss<<"{value:"<<temperature->val<<
-        //                                             publish("temperature",)
-        //                                            } }, NULL));
-        // //  ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &echo_humidity, NULL));
     };
 
     CMQTTWrapper::~CMQTTWrapper()
@@ -56,6 +45,11 @@ namespace mqtt
     void CMQTTWrapper::on_connected(esp_mqtt_event_handle_t const /*event*/)
     {
         ESP_LOGI(TAG, "connected");
+        std::string info;
+
+        info = "{ \"sw\":" + device_info_.sw + ",\"mac\":" + device_info_.mac + ",\"ip\":" + device_info_.ip + ",\"rssi\":" + std::to_string(device_info_.rssi) + "}";
+
+        publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, info);
     }
 
     void CMQTTWrapper::on_disconnected(const esp_mqtt_event_handle_t event)

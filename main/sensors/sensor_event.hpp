@@ -13,14 +13,13 @@ namespace sensor_event
         internall_humidity
     };
 
-    typedef struct
-    {
-        int raw;
-        uint16_t lux;
-    } lighting_t;
-
     constexpr auto LUX_MAX = 1000;
     constexpr auto LUX_MIN = 0;
+
+    typedef struct
+    {
+        uint16_t val;
+    } lighting_t;
 
     typedef struct
     {
