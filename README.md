@@ -93,3 +93,6 @@ https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/periph
 https://esp32tutorials.com/esp32-esp-idf-max7219-dot-matrix-display
 
 https://xantorohara.github.io/led-matrix-editor/#7e1818181c181800|7e060c3060663c00|3c66603860663c00|30307e3234383000|3c6660603e067e00|3c66663e06663c00|1818183030667e00|3c66663c66663c00|3c66607c66663c00|3c66666e76663c00
+
+[json]
+https://github.com/nopnop2002/esp-idf-json

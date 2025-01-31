@@ -8,16 +8,14 @@ const std::vector<uint8_t> glif_1 = {
     0b11111111,
     0b10000000,
 };
-
 const std::vector<uint8_t> glif_2 = {
     0b11000010,
     0b11100011,
     0b10110001,
     0b10011001,
-    0b10011111,
+    0b10001111,
     0b10000110,
 };
-
 const std::vector<uint8_t> glif_3 = {
     0b01000110,
     0b11000011,
@@ -26,7 +24,6 @@ const std::vector<uint8_t> glif_3 = {
     0b11111111,
     0b01110110,
 };
-
 const std::vector<uint8_t> glif_4 = {
     0b00011000,
     0b00010100,
@@ -68,10 +65,10 @@ const std::vector<uint8_t> glif_8 = {
     0b01110110,
 };
 const std::vector<uint8_t> glif_9 = {
-    0b01000110,
-    0b11001111,
-    0b10001001,
-    0b10001001,
+    0b01001110,
+    0b11011111,
+    0b10010001,
+    0b10010001,
     0b11111111,
     0b01111110,
 };

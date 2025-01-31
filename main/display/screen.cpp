@@ -10,12 +10,16 @@
 #include "font.hpp"
 #include "transformation.hpp"
 #include "sdkconfig.h"
+#include "kvs.hpp"
 
 namespace screen
 {
     static const char *TAG = "SCREEN";
 
     max7219_t dev;
+
+    uint8_t display_segment_rotation;
+    bool display_segment_upsidedown;
 
     uint8_t lighting_to_brightness(uint16_t lux)
     {
@@ -62,8 +66,8 @@ namespace screen
 
     esp_err_t print(const buffer_t &buffer)
     {
-        auto transformed = transformation::buffer_by_segment_rotate(buffer, CONFIG_DISPLAY_SEGMENT_ROTATION);
-        if (CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN)
+        auto transformed = transformation::buffer_by_segment_rotate(buffer, display_segment_rotation);
+        if (display_segment_upsidedown)
         {
             for (auto &line : transformed)
             {
@@ -92,7 +96,20 @@ namespace screen
 
     void init()
     {
+        auto kvss = kvs::handler("screen");
+        bool display_mirrored;
 
+        // kvss.get_item_or("segment_rotation", display_segment_rotation, CONFIG_DISPLAY_SEGMENT_ROTATION);
+        // kvss.get_item_or("segment_upsidedown", display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
+        // kvss.get_item_or("mirrored", display_mirrored, CONFIG_DISPLAY_MIRRORED);
+
+        kvss.get_item_or("segment_rotation", display_segment_rotation, 3);
+        kvss.get_item_or("segment_upsidedown", display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
+        kvss.get_item_or("mirrored", display_mirrored, true);
+
+        ESP_LOGI(TAG, "segment_rotation=%d", display_segment_rotation);
+        ESP_LOGI(TAG, "segment_upsidedown=%d", display_segment_upsidedown);
+        ESP_LOGI(TAG, "mirrored=%d", display_mirrored);
         // Configure SPI bus
         spi_bus_config_t cfg = {
             .mosi_io_num = GPIO_NUM_6,
@@ -108,14 +125,14 @@ namespace screen
         dev = max7219_t{
             .digits = 0,
             .cascade_size = SEGMENTS,
-            .mirrored = CONFIG_DISPLAY_MIRRORED,
+            .mirrored = display_mirrored,
         };
         ESP_ERROR_CHECK(max7219_init_desc(&dev, SPI2_HOST, MAX7219_MAX_CLOCK_SPEED_HZ, GPIO_NUM_5));
         ESP_ERROR_CHECK(max7219_init(&dev));
         ESP_ERROR_CHECK(max7219_clear(&dev));
 
         ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &echo, NULL));
-        //        test_rotation();
+        test_rotation();
         startup_screen();
     }
 

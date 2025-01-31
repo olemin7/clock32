@@ -42,21 +42,21 @@ task(void *pvParameters)
     switch (id)
     {
     case SI_MODEL_SI7013:
-        printf("Si7013");
+        ESP_LOGD(TAG, "Si7013");
         break;
     case SI_MODEL_SI7020:
-        printf("Si7020");
+        ESP_LOGD(TAG, "Si7020");
         break;
     case SI_MODEL_SI7021:
-        printf("Si7021");
+        ESP_LOGD(TAG, "Si7021");
         break;
     case SI_MODEL_SAMPLE:
-        printf("Engineering sample");
+        ESP_LOGD(TAG, "Engineering sample");
         break;
     default:
-        printf("Unknown");
+        ESP_LOGD(TAG, "Unknown");
     }
-    printf("\nSerial number: 0x%08" PRIx32 "%08" PRIx32 "\n", (uint32_t)(serial >> 32), (uint32_t)serial);
+    ESP_LOGD(TAG, "\nSerial number: 0x%08" PRIx32 "%08" PRIx32 "\n", (uint32_t)(serial >> 32), (uint32_t)serial);
 
     utils::average_treshold_timeout<float, float> temperature_filter(TEMPERATURE_THRESHOLD, 3, 10s);
     utils::average_treshold_timeout<float, float> humidity_filter(HUMIDITY_THRESHOLD, 3, 20s);

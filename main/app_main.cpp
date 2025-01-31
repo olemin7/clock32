@@ -12,8 +12,8 @@
 
 #include <esp_log.h>
 #include <esp_wifi.h>
+#include "kvs.hpp"
 
-#include <nvs_flash.h>
 #include <string>
 #include "freertos/queue.h"
 
@@ -40,19 +40,26 @@
 
 using namespace std::chrono_literals;
 
+constexpr auto DEVICE_SW = CONFIG_APP_NAME " " __DATE__ " " __TIME__;
 layers::layers diplay;
 
-std::unique_ptr<mqtt::CMQTTWrapper>       mqtt_mng = nullptr;
+std::unique_ptr<mqtt::CMQTTWrapper> mqtt_mng = nullptr;
 std::unique_ptr<clock_tm::clock> clock_ptr = nullptr;
 button_handle_t btn_ptr = nullptr;
 static const char *TAG = "main";
 
 static EventGroupHandle_t app_main_event_group;
 constexpr int GOT_IP = BIT0;
-mqtt::device_info_t device_info;
 
-static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-    ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
+void on_message(const std::string &message)
+{
+    ESP_LOGI(TAG, "got msg =%s", message.c_str());
+}
+
+static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+{
+    mqtt::device_info_t device_info;
+    ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
     device_info.ip = utils::to_Str(event->ip_info.ip);
 
     ESP_LOGI(TAG, "Connected with IP Address: %s", device_info.ip.c_str());
@@ -62,7 +69,20 @@ static void event_got_ip_handler(void* arg, esp_event_base_t event_base, int32_t
     xEventGroupSetBits(app_main_event_group, GOT_IP);
 
     ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&device_info.rssi));
+
+    device_info.sw = DEVICE_SW;
     device_info.mac = utils::get_mac();
+
+    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info, on_message);
+
+    blink::stop(blink::BLINK_CONNECTING);
+}
+
+static void event_lost_ip_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+{
+    blink::start(blink::BLINK_CONNECTING);
+    ESP_LOGI(TAG, "event_lost_ip_handler");
+    mqtt_mng.reset();
 }
 
 #define BOOT_BUTTON_NUM 9
@@ -105,29 +125,18 @@ void mqtt_lighting(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*ev
 
 void init()
 {
-    device_info.sw = CONFIG_APP_NAME " " __DATE__ " " __TIME__;
     utils::print_info();
     // Create a default event loop
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     app_main_event_group = xEventGroupCreate();
-    /* Initialize NVS partition */
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        /* NVS partition was truncated
-         * and needs to be erased */
-        ESP_ERROR_CHECK(nvs_flash_erase());
-
-        /* Retry nvs_flash_init */
-        ESP_ERROR_CHECK(nvs_flash_init());
-    }
+    kvs::init();
 
     /* Initialize TCP/IP */
     ESP_ERROR_CHECK(esp_netif_init());
 
     /* Initialize the event loop */
-
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_got_ip_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_LOST_IP, &event_lost_ip_handler, NULL));
     blink::init();
     screen::init();
 
@@ -165,7 +174,7 @@ extern "C" void app_main(void)
 
     blink::start(blink::BLINK_CONNECTING);
     xEventGroupWaitBits(app_main_event_group, GOT_IP, pdTRUE, pdTRUE, portMAX_DELAY);
-    blink::stop(blink::BLINK_CONNECTING);
+
     htu2x::init();
     sntp::init([]()
                {
@@ -178,8 +187,6 @@ extern "C" void app_main(void)
             diplay.show(5, buffMin, screen::js_center);
             ESP_LOGI(TAG, "clock %s",buffMin); });
         } });
-
-    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info);
     //--------------------------------
     ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &mqtt_temperature, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &mqtt_humidity, NULL));
