@@ -96,3 +96,14 @@ https://xantorohara.github.io/led-matrix-editor/#7e1818181c181800|7e060c3060663c
 
 [json]
 https://github.com/nopnop2002/esp-idf-json
+
+[cmd list]
+{"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
+
+'{"cmd":"display","payload":{"segment_rotation":3,"segment_upsidedown":true,"mirrored":true}}'
+
+
+
+
+
+

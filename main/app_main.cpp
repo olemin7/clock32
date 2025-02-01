@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <math.h>
+#include <string>
 
 #include "rom/rtc.h"
 #include "sdkconfig.h"
@@ -12,9 +13,6 @@
 
 #include <esp_log.h>
 #include <esp_wifi.h>
-#include "kvs.hpp"
-
-#include <string>
 #include "freertos/queue.h"
 
 #include "esp_exception.hpp"
@@ -37,8 +35,11 @@
 #include "display/screen.hpp"
 #include "display/layers.hpp"
 #include "display/tests.hpp"
+#include "kvs.hpp"
+#include "proto/defines.hpp"
 
 using namespace std::chrono_literals;
+static const char *TAG = "main";
 
 constexpr auto DEVICE_SW = CONFIG_APP_NAME " " __DATE__ " " __TIME__;
 layers::layers diplay;
@@ -46,15 +47,11 @@ layers::layers diplay;
 std::unique_ptr<mqtt::CMQTTWrapper> mqtt_mng = nullptr;
 std::unique_ptr<clock_tm::clock> clock_ptr = nullptr;
 button_handle_t btn_ptr = nullptr;
-static const char *TAG = "main";
+
+proto::handler commands;
 
 static EventGroupHandle_t app_main_event_group;
 constexpr int GOT_IP = BIT0;
-
-void on_message(const std::string &message)
-{
-    ESP_LOGI(TAG, "got msg =%s", message.c_str());
-}
 
 static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -73,7 +70,8 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
     device_info.sw = DEVICE_SW;
     device_info.mac = utils::get_mac();
 
-    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info, on_message);
+    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info, [](auto msg)
+                                                    { commands.on_command(msg); });
 
     blink::stop(blink::BLINK_CONNECTING);
 }
@@ -92,7 +90,7 @@ static void button_event_cb(void *arg, void *data)
     ESP_LOGW(TAG, "REQ REPROVISION");
     diplay.show(10, "***");
     ESP_ERROR_CHECK(provision_reset());
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1000));
     esp_restart();
 }
 
@@ -121,6 +119,7 @@ void mqtt_lighting(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*ev
 {
     const auto event = (sensor_event::lighting_t *)event_data;
     mqtt_send_sensor("lighting", event->val);
+    mqtt_send_sensor("adc", event->raw);
 }
 
 void init()
@@ -153,6 +152,25 @@ void init()
     assert(btn_ptr);
     ESP_ERROR_CHECK(iot_button_register_cb(btn_ptr, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
     lighting::init();
+    commands.add("ldr", [](auto payload)
+                 {
+                     proto::ldr_t data;
+                     if (proto::get(payload,data))
+                     {
+                         lighting::update_adc_range(data.min, data.max);
+                     } });
+    commands.add("display", [](auto payload)
+                 {
+                     proto::display_t data;
+                     if (proto::get(payload,data))
+                     {
+                        screen::set_config(data.segment_rotation,data.segment_upsidedown,data.mirrored);
+                     } });
+    commands.add("restart", [](auto)
+                 { 
+                    ESP_LOGI(TAG, "esp_restart");
+                    vTaskDelay(pdMS_TO_TICKS(500));
+                    esp_restart(); });
 }
 
 /************************************

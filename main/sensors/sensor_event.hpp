@@ -18,6 +18,7 @@ namespace sensor_event
 
     typedef struct
     {
+        uint16_t raw;
         uint16_t val;
     } lighting_t;
 

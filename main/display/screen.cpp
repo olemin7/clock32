@@ -14,7 +14,11 @@
 
 namespace screen
 {
-    static const char *TAG = "SCREEN";
+    constexpr auto TAG = "SCREEN";
+
+    constexpr auto kvs_segment_rotation = "s_rotation";
+    constexpr auto kvs_segment_upsidedown = "s_upsidedown";
+    constexpr auto kvs_mirrored = "mirrored";
 
     max7219_t dev;
 
@@ -96,20 +100,19 @@ namespace screen
 
     void init()
     {
-        auto kvss = kvs::handler("screen");
+        auto kvss = kvs::handler(TAG);
         bool display_mirrored;
 
-        // kvss.get_item_or("segment_rotation", display_segment_rotation, CONFIG_DISPLAY_SEGMENT_ROTATION);
+        kvss.get_item_or(kvs_segment_rotation, display_segment_rotation, CONFIG_DISPLAY_SEGMENT_ROTATION);
+        kvss.get_item_or(kvs_segment_upsidedown, display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
+        kvss.get_item_or(kvs_mirrored, display_mirrored, CONFIG_DISPLAY_MIRRORED);
+
+        // kvss.get_item_or("segment_rotation", display_segment_rotation, 3);
         // kvss.get_item_or("segment_upsidedown", display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
-        // kvss.get_item_or("mirrored", display_mirrored, CONFIG_DISPLAY_MIRRORED);
+        // kvss.get_item_or("mirrored", display_mirrored, true);
 
-        kvss.get_item_or("segment_rotation", display_segment_rotation, 3);
-        kvss.get_item_or("segment_upsidedown", display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
-        kvss.get_item_or("mirrored", display_mirrored, true);
+        ESP_LOGI(TAG, "segment_rotation=%d segment_upsidedown=%d mirrored=%d", display_segment_rotation, display_segment_upsidedown, display_mirrored);
 
-        ESP_LOGI(TAG, "segment_rotation=%d", display_segment_rotation);
-        ESP_LOGI(TAG, "segment_upsidedown=%d", display_segment_upsidedown);
-        ESP_LOGI(TAG, "mirrored=%d", display_mirrored);
         // Configure SPI bus
         spi_bus_config_t cfg = {
             .mosi_io_num = GPIO_NUM_6,
@@ -132,7 +135,7 @@ namespace screen
         ESP_ERROR_CHECK(max7219_clear(&dev));
 
         ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::lighting, &echo, NULL));
-        test_rotation();
+        //    test_rotation();
         startup_screen();
     }
 
@@ -146,5 +149,38 @@ namespace screen
     {
         const auto image = font::get(str);
         return print(image, justify, offset);
+    }
+
+    esp_err_t set_config(uint8_t segment_rotation,
+                         bool segment_upsidedown,
+                         bool mirrored)
+    {
+        auto kvss = kvs::handler(TAG);
+
+        ESP_LOGI(TAG, "rotation %d, upsidedown %d, mirrored %d", segment_rotation, segment_upsidedown, mirrored);
+
+        bool error = false;
+
+        if (ESP_OK != kvss.set_item(kvs_segment_rotation, segment_rotation))
+        {
+            error = true;
+        }
+
+        if (ESP_OK != kvss.set_item(kvs_segment_upsidedown, segment_upsidedown))
+        {
+            error = true;
+        }
+
+        if (ESP_OK != kvss.set_item(kvs_mirrored, mirrored))
+        {
+            error = true;
+        }
+
+        if (error)
+        {
+            ESP_LOGE(TAG, "error wr");
+        }
+
+        return ESP_OK;
     }
 }

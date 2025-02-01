@@ -21,6 +21,14 @@ namespace kvs
         ESP_ERROR_CHECK(err);
     }
 
+    handler::~handler()
+    {
+        if (updated_)
+        {
+            handle_->commit();
+        }
+    }
+
     template <>
     esp_err_t handler::set_item(const std::string &key, const std::string value)
     {
@@ -45,6 +53,7 @@ namespace kvs
             err = nvs_flash_init();
         }
         ESP_ERROR_CHECK(err);
+        esp_log_level_set(TAG, ESP_LOG_DEBUG);
     }
 
 } // namespace utils
