@@ -98,7 +98,7 @@ namespace screen
         kvss.get_item_or(kvs_segment_rotation, display_segment_rotation, CONFIG_DISPLAY_SEGMENT_ROTATION);
         kvss.get_item_or(kvs_segment_upsidedown, display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
         kvss.get_item_or(kvs_mirrored, display_mirrored, CONFIG_DISPLAY_MIRRORED);
-        kvss.get_item_or(kvs_brightness_max, brightness_max, MAX7219_MAX_BRIGHTNESS);
+        kvss.get_item_or(kvs_brightness_max, brightness_max, MAX7219_MAX_BRIGHTNESS / 2);
         kvss.get_item_or(kvs_brightness_min, brightness_min, 0);
 
         ESP_LOGI(TAG, "segment_rotation=%d segment_upsidedown=%d mirrored=%d", display_segment_rotation, display_segment_upsidedown, display_mirrored);
