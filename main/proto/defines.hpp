@@ -33,4 +33,10 @@ namespace proto
     };
     bool get(cJSON_opt_t payload, brightness_t &data);
 
+    struct timezone_t
+    {
+        std::string tz;
+    };
+    bool get(cJSON_opt_t payload, timezone_t &data);
+
 } // namespace utils

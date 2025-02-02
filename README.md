@@ -102,6 +102,8 @@ https://github.com/nopnop2002/esp-idf-json
 
 '{"cmd":"display","payload":{"segment_rotation":3,"segment_upsidedown":true,"mirrored":true}}'
 
+'{"cmd":"timezone","payload":{"tz":"GMT-3"}}'
+
 
 
 

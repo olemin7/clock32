@@ -21,6 +21,38 @@ namespace kvs
     private:
         std::unique_ptr<nvs::NVSHandle> handle_;
         bool updated_ = false;
+        template <typename T>
+        esp_err_t set_item_(const std::string &key, T value)
+        {
+            if (!handle_)
+            {
+                return ESP_ERR_INVALID_STATE;
+            }
+
+            const auto ret = handle_->set_item(key.c_str(), value);
+            if (ESP_OK == ret)
+            {
+                updated_ = true;
+            }
+
+            return ret;
+        }
+
+        esp_err_t set_item_(const std::string &key, const std::string value)
+        {
+            if (!handle_)
+            {
+                return ESP_ERR_INVALID_STATE;
+            }
+
+            const auto ret = handle_->set_string(key.c_str(), value.c_str());
+            if (ESP_OK == ret)
+            {
+                updated_ = true;
+            }
+
+            return ret;
+        }
 
     public:
         handler(const std::string &ns_name);
@@ -35,6 +67,22 @@ namespace kvs
                 return ESP_ERR_INVALID_STATE;
             }
             return handle_->get_item(key.c_str(), value);
+        }
+
+        esp_err_t get_item(const std::string &key, std::string &value)
+        {
+            if (!handle_)
+            {
+                return ESP_ERR_INVALID_STATE;
+            }
+            //    virtual esp_err_t get_string(const char *key, char* out_str, size_t len) = 0;
+            char tt[255];
+            const auto res = handle_->get_string(key.c_str(), tt, sizeof(tt));
+            if (ESP_OK == res)
+            {
+                value = tt;
+            }
+            return res;
         }
 
         template <typename T, typename D>
@@ -57,7 +105,7 @@ namespace kvs
             auto ret = ESP_OK;
             if (ESP_OK != get_item(key, saved_val) || saved_val != value)
             {
-                ret = handle_->set_item(key.c_str(), value);
+                ret = set_item_(key.c_str(), value);
                 if (ESP_OK == ret)
                 {
                     updated_ = true;

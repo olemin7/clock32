@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <sys/time.h>
+#include <string>
 #include "esp_timer_cxx.hpp"
 
 namespace clock_tm
@@ -14,4 +15,6 @@ namespace clock_tm
     public:
         clock(cb_t &&cb);
     };
+
+    void update_time_zone(const std::string &tz);
 }

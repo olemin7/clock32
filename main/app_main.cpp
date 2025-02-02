@@ -94,14 +94,6 @@ static void button_event_cb(void *arg, void *data)
     esp_restart();
 }
 
-void mqtt_send_responce(const std::string result)
-{
-    if (mqtt_mng)
-    {
-        mqtt_mng->publish_device_brunch("resp", "result", result);
-    }
-}
-
 template <typename T>
 void mqtt_send_sensor(const std::string &field, T value)
 {
@@ -195,6 +187,14 @@ void init()
                     ESP_ERROR_CHECK(nvs_flash_erase()); 
                     vTaskDelay(pdMS_TO_TICKS(500));
                     esp_restart(); });
+
+    commands.add("timezone", [](auto payload)
+                 {
+                    proto::timezone_t data;
+                    if (proto::get(payload,data))
+                    {
+                        clock_tm::update_time_zone(data.tz);
+                    } });
 }
 
 /************************************

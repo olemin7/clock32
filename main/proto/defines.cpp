@@ -55,4 +55,17 @@ namespace proto
         }
         return false;
     }
+
+    bool get(cJSON_opt_t payload, timezone_t &data)
+    {
+        const auto tz = get_field_string(payload, "tz");
+
+        if (tz)
+        {
+            data.tz = tz.value();
+
+            return true;
+        }
+        return false;
+    }
 }

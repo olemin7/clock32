@@ -2,10 +2,13 @@
 #include "clock_tm.hpp"
 #include <sys/time.h>
 #include "esp_log.h"
+#include "kvs.hpp"
 
 namespace clock_tm
 {
     static const char *TAG = "clock_tm";
+    constexpr auto kvs_tz = "tz";
+
     clock::clock(cb_t &&cb) : minute_timer_([this, cb_ = std::move(cb)]()
                                             {
     time_t now;
@@ -22,10 +25,26 @@ namespace clock_tm
 
     cb_(timeinfo); })
     {
-        ESP_LOGI(TAG, "CONFIG_TIMEZONE=%s", CONFIG_TIMEZONE);
-        setenv("TZ", CONFIG_TIMEZONE, 1);
+        auto kvss = kvs::handler(TAG);
+        std::string tz;
+        kvss.get_item_or(kvs_tz, tz, CONFIG_TIMEZONE);
+
+        ESP_LOGI(TAG, "TZ=%s", tz.c_str());
+        setenv("TZ", tz.c_str(), 1);
         tzset();
 
         minute_timer_.start(std::chrono::seconds(1));
+    }
+
+    void update_time_zone(const std::string &tz)
+    {
+        auto kvss = kvs::handler(TAG);
+        ESP_LOGI(TAG, "tz %s", tz.c_str());
+
+        if (ESP_OK != kvss.set_item(kvs_tz, tz))
+        {
+
+            ESP_LOGE(TAG, "error wr");
+        }
     }
 }
