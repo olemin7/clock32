@@ -158,13 +158,17 @@ menu "App Configuration"
             default 10
         config LIGHTING_MAX_RAW
             int "LIGHTING_MAX_RAW"
-            default 4096
+            default 500
         config LIGHTING_MIN_RAW
             int "LIGHTING_MIN_RAW"
-            default 500
+            default 4096
     endmenu
 
     menu "Display"
+        config DISPLAY_SEGMENTS
+            int "DISPLAY_SEGMENTS"
+            default 4
+
         config DISPLAY_SEGMENT_ROTATION
             int "DISPLAY_SEGMENT_ROTATION"
             default 3

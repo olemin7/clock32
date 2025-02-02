@@ -21,6 +21,7 @@
 #include "sensor_event.hpp"
 #include "average_treshold.hpp"
 #include "kvs.hpp"
+#include "utils.hpp"
 
 namespace lighting
 {
@@ -50,14 +51,14 @@ namespace lighting
         };
         ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &config));
         utils::average_treshold_timeout<uint16_t, uint32_t> lighting_filter(CONFIG_LIGHTING_THRESHOLD, 3, 20s);
-        uint16_t adc_max;
-        uint16_t adc_min;
+        int adc_max;
+        int adc_min;
         {
             auto kvss = kvs::handler(TAG);
             kvss.get_item_or(kvs_adc_max, adc_max, CONFIG_LIGHTING_MAX_RAW);
             kvss.get_item_or(kvs_adc_min, adc_min, CONFIG_LIGHTING_MIN_RAW);
         }
-        ESP_LOGI(TAG, "ADC adc_max=%d, adc_min=%d", adc_max, adc_min);
+        ESP_LOGI(TAG, "ADC adc_min=%d, adc_max=%d", adc_min, adc_max);
 
         while (1)
         {
@@ -65,19 +66,7 @@ namespace lighting
             ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &raw));
             if (raw) // to mitigate issue WiFi affects ADC1 raw data (IDFGH-6623) espressif/esp-idf#8266
             {
-                uint16_t lux;
-                if (raw > adc_max)
-                {
-                    lux = LUX_MIN; // inverted
-                }
-                else if (raw < adc_min)
-                {
-                    lux = LUX_MAX; // inverted
-                }
-                else
-                {
-                    lux = (LUX_MAX - LUX_MIN) * (adc_max - raw) / (adc_max - adc_min) + LUX_MIN;
-                }
+                const auto lux = utils::transform_range(adc_min, adc_max, LUX_MIN, LUX_MAX, raw);
 
                 ESP_LOGD(TAG, "ADC raw=%d,lux=%d", raw, lux);
                 if (lighting_filter.push(lux))
@@ -112,11 +101,11 @@ ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::li
     void init()
     {
         ESP_LOGI(TAG, "starting");
-        //  esp_log_level_set(TAG, ESP_LOG_DEBUG);
+        //    esp_log_level_set(TAG, ESP_LOG_DEBUG);
         xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE + 1024, NULL, 5, NULL);
     }
 
-    void update_adc_range(uint16_t min, uint16_t max)
+    void update_adc_range(int min, int max)
     {
         ESP_LOGI(TAG, "min %d, max %d", min, max);
         auto kvss = kvs::handler(TAG);

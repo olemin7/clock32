@@ -34,4 +34,46 @@ class generic_sensor {
 };
 
 float trimm(float in, uint8_t decimals);
+
+template <typename T>
+T to_range(const T in_min, const T in_max, T value)
+{
+    const auto max = std::max(in_min, in_max);
+    const auto min = std::min(in_min, in_max);
+    if (value > max)
+    {
+        return max;
+    }
+    if (value < min)
+    {
+        return min;
+    }
+    return value;
+}
+
+template <typename T>
+T get_range(const T min, const T max)
+{
+    if (max > min)
+    {
+        return max - min;
+    }
+    return min - max;
+}
+
+template <typename IN_T, typename OUT_T>
+OUT_T transform_range(const IN_T in_min, const IN_T in_max, const OUT_T out_min, const OUT_T out_max, IN_T value)
+{
+    const auto val_in_range = to_range(in_min, in_max, value) - std::min(in_min, in_max);
+    const auto range_in = get_range(in_max, in_min);
+    const auto range_out = get_range(out_min, out_max);
+    const auto offest_out = std::min(out_min, out_max);
+
+    if ((in_max > in_min) ^ (out_max > out_min))
+    { // invert
+        return (range_in - val_in_range) * range_out / range_in + offest_out;
+    }
+    return val_in_range * range_out / range_in + offest_out;
+}
+
 } // namespace utils

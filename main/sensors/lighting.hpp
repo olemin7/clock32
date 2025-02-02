@@ -5,5 +5,5 @@
 namespace lighting
 {
     void init();
-    void update_adc_range(uint16_t min, uint16_t max);
+    void update_adc_range(int min, int max);
 }

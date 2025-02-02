@@ -45,14 +45,14 @@ namespace transformation
         return buffer[segment * 8 + row];
     }
 
-    buffer_t buffer_by_segment_rotate(const buffer_t &in, uint8_t rotation)
+    buffer_t buffer_by_segment_rotate(const buffer_t &in, uint8_t rotation, uint8_t segments)
     {
         if (0 == rotation || 3 < rotation)
         {
             return in;
         }
         buffer_t out;
-        for (uint8_t segment = 0; segment < SEGMENTS; segment++)
+        for (uint8_t segment = 0; segment < segments; segment++)
         {
 
             for (uint8_t row = 0; row < 8; row++)

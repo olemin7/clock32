@@ -40,4 +40,19 @@ namespace proto
         }
         return false;
     }
+
+    bool get(cJSON_opt_t payload, brightness_t &data)
+    {
+        const auto min = get_field_number(payload, "min");
+        const auto max = get_field_bool(payload, "max");
+
+        if (min && max)
+        {
+            data.min = max.value();
+            data.max = max.value();
+
+            return true;
+        }
+        return false;
+    }
 }
