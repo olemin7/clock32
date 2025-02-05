@@ -4,21 +4,6 @@ menu "App Configuration"
         default "CLOCK"
     
     menu "Provision"
-    choice EXAMPLE_PROV_TRANSPORT
-        bool "Provisioning Transport"
-        default EXAMPLE_PROV_TRANSPORT_SOFTAP if IDF_TARGET_ESP32S2
-        default EXAMPLE_PROV_TRANSPORT_BLE
-        help
-            Wi-Fi provisioning component offers both, SoftAP and BLE transports. Choose any one.
-
-        config EXAMPLE_PROV_TRANSPORT_BLE
-            bool "BLE"
-            select BT_ENABLED
-            depends on !IDF_TARGET_ESP32S2
-        config EXAMPLE_PROV_TRANSPORT_SOFTAP
-            bool "Soft AP"
-            select LWIP_IPV4
-    endchoice
 
     choice EXAMPLE_PROV_SECURITY_VERSION
         bool "Protocomm security version"

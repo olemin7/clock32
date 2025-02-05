@@ -108,9 +108,14 @@ mosquitto_pub -d -t cmd/64E833885558 -m '{"cmd":"brightness","payload":{"max":8,
 
 '{"cmd":"timezone","payload":{"tz":"GMT-3"}}'
 
+[IDF_PATH]
 
+printenv IDF_PATH
 
+export IDF_PATH="/home/oleksandrminenko/personal/esp-idf/v5.4/esp-idf"
 
+[TODO]
+custom data when provision
 
 
 

@@ -89,6 +89,7 @@ static void button_event_cb(void *arg, void *data)
 {
     ESP_LOGW(TAG, "REQ REPROVISION");
     diplay.show(10, "***");
+    blink::start(blink::BLINK_FACTORY_RESET);
     ESP_ERROR_CHECK(provision_reset());
     vTaskDelay(pdMS_TO_TICKS(1000));
     esp_restart();
