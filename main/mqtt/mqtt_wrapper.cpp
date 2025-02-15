@@ -32,7 +32,7 @@ namespace mqtt
         : imqtt::Client(imqtt::BrokerConfiguration{.address = {imqtt::URI{std::string{CONFIG_BROKER_URL}}},
                                                    .security = imqtt::Insecure{}},
                         {}, {.connection = {.disable_auto_reconnect = true}}),
-          device_info_(device_info), device_cmd_cb_(device_cmd_cb), device_cmd_("cmd/" + device_info_.mac)
+          device_info_(device_info), device_cmd_cb_(device_cmd_cb), device_cmd_("cmd/" + device_info_.mac), brodcast_cmd_("cmd")
     {
         ESP_LOGI(TAG, "CONFIG_BROKER_URL %s", CONFIG_BROKER_URL);
         //    esp_log_level_set(TAG, ESP_LOG_DEBUG);
@@ -48,12 +48,8 @@ namespace mqtt
     {
         ESP_LOGI(TAG, "connected");
         subscribe(device_cmd_.get(), QoS::ExactlyOnce);
-
-        std::string info;
-
-        info = "{ \"sw\":" + device_info_.sw + ",\"mac\":" + device_info_.mac + ",\"ip\":" + device_info_.ip + ",\"rssi\":" + std::to_string(device_info_.rssi) + "}";
-
-        publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, info);
+        subscribe(brodcast_cmd_.get(), QoS::ExactlyOnce);
+        send_advertisement();
     }
 
     void CMQTTWrapper::on_disconnected(const esp_mqtt_event_handle_t event)
@@ -76,6 +72,23 @@ namespace mqtt
         {
             device_cmd_cb_(msg);
         }
+        if (brodcast_cmd_.match(event->topic, event->topic_len))
+        {
+            if (msg == "adv")
+            {
+                send_advertisement();
+            }
+        }
+    }
+
+    void CMQTTWrapper::send_advertisement()
+    {
+
+        std::string info;
+
+        info = "{\"sw\":\"" + device_info_.sw + "\",\"mac\":\"" + device_info_.mac + "\",\"ip\":\"" + device_info_.ip + "\",\"rssi\":" + std::to_string(device_info_.rssi) + "}";
+
+        publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, info);
     }
 
 } // namespace mqtt

@@ -33,21 +33,22 @@ namespace mqtt
       const device_info_t device_info_;
       command_cb_t device_cmd_cb_;
       idf::mqtt::Filter device_cmd_;
+      idf::mqtt::Filter brodcast_cmd_;
       // ESPTimer timer_
    public:
       CMQTTWrapper(device_info_t &device_info, command_cb_t &&device_cmd_cb);
       virtual ~CMQTTWrapper();
       void publish(const std::string &topic, const std::string &message);
       template <typename T>
-      void publish(const std::string &topic, const std::string &field, T value)
+      void publish(const std::string &topic, T value)
       {
-         publish(topic, "{\"" + field + "\":" + std::to_string(value) + "}");
+         publish(topic, std::to_string(value));
       }
 
       template <typename T>
-      void publish_device_brunch(const std::string &topic, const std::string &field, T value)
+      void publish_device_brunch(const std::string &field, T value)
       {
-         publish("devices/" + device_info_.mac + "/" + topic, field, value);
+         publish("devices/" + device_info_.mac + "/" + field, value);
       }
 
    private:
@@ -55,6 +56,8 @@ namespace mqtt
       void on_disconnected(const esp_mqtt_event_handle_t event) final;
       void on_published(const esp_mqtt_event_handle_t event) final {}
       void on_data(const esp_mqtt_event_handle_t event) final;
+
+      void send_advertisement();
    };
 
 } // namespace mqtt

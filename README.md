@@ -59,15 +59,18 @@ sudo ufw allow 1883
 
 sudo /etc/init.d/mosquitto restart
 
+mosquitto_sub -h nas.local -d -t advertisement -h nas.local
+mosquitto_pub -h nas.local -d -t cmd -m "adv"
+
 one terminal
 mosquitto_sub -d -t hello/world
 mosquitto_sub -d -t stat/weather -h central.local
 Connect to another ssh session and run
 mosquitto_pub -d -t hello/world -m "Hello from terminal window 2!"
-mosquitto_pub -h central.local -d -t stat/pr_clock -m "Hello from terminal window 2!"
+
 sudo tail -f /var/log/mosquitto/mosquitto.log
 
-mosquitto_sub -d -t '#'
+mosquitto_sub -h nas.local -d -t '#'
 https://github.com/nopnop2002/esp-idf-json/tree/master/json-basic-object
 
 [rtc]

@@ -1,8 +1,4 @@
 menu "App Configuration"
-    config APP_NAME
-        string "APP_NAME"
-        default "CLOCK"
-    
     menu "Provision"
 
     choice EXAMPLE_PROV_SECURITY_VERSION
@@ -83,18 +79,20 @@ menu "App Configuration"
     endmenu
             
     menu "MQTT Configuration"
-         config BROKER_URL
+        config BROKER_URL
                 string "MQTT Broker URL"
                 default "mqtt://nas.local"
                 help
                     URL of the broker to connect to
                     
-         config MQTT_TOPIC_ADVERTISEMENT
+        config MQTT_TOPIC_ADVERTISEMENT
                 string "MQTT_TOPIC_ADVERTISEMENT"
                 default "advertisement"
-         config MQTT_TOPIC_SENSORS
-                string "MQTT_TOPIC_SENSORS"
-                default "sensors"
+
+        config MQTT_TOPIC_BROADCAST
+            string "message related to all devices"
+            default "brodcast"
+                
     endmenu
                 
     config SENSORS_COLLECTION_TIMEOUT

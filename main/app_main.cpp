@@ -41,7 +41,8 @@
 using namespace std::chrono_literals;
 static const char *TAG = "main";
 
-constexpr auto DEVICE_SW = CONFIG_APP_NAME " " __DATE__ " " __TIME__;
+constexpr auto DEVICE_SW = "CLOCK "__DATE__
+                           " " __TIME__;
 layers::layers diplay;
 
 std::unique_ptr<mqtt::CMQTTWrapper> mqtt_mng = nullptr;
@@ -100,7 +101,7 @@ void mqtt_send_sensor(const std::string &field, T value)
 {
     if (mqtt_mng)
     {
-        mqtt_mng->publish_device_brunch("sensors", field, value);
+        mqtt_mng->publish_device_brunch(field, value);
     }
 }
 
