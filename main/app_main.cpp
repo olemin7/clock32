@@ -66,8 +66,6 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
     /* Signal main application to continue execution */
     xEventGroupSetBits(app_main_event_group, GOT_IP);
 
-    ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&device_info.rssi));
-
     device_info.sw = DEVICE_SW;
     device_info.mac = utils::get_mac();
 

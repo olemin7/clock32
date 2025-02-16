@@ -14,7 +14,7 @@
 
 #include "mqtt_wrapper.hpp"
 #include "nvs_flash.h"
-
+#include <esp_wifi.h>
 #include <esp_log.h>
 #include <memory>
 
@@ -86,9 +86,13 @@ namespace mqtt
 
         std::string info;
 
-        info = "{\"sw\":\"" + device_info_.sw + "\",\"mac\":\"" + device_info_.mac + "\",\"ip\":\"" + device_info_.ip + "\",\"rssi\":" + std::to_string(device_info_.rssi) + "}";
+        info = "{\"sw\":\"" + device_info_.sw + "\",\"mac\":\"" + device_info_.mac + "\"}";
 
         publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, info);
+        publish_device_brunch("ip", device_info_.ip);
+        int rssi;
+        ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&rssi));
+        publish_device_brunch("rssi", rssi);
     }
 
 } // namespace mqtt

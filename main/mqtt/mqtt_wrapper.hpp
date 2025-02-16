@@ -22,7 +22,6 @@ namespace mqtt
       std::string sw;
       std::string ip;
       std::string mac;
-      int rssi;
    };
 
    using command_cb_t = std::function<void(const std::string &msg)>;
