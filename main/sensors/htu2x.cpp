@@ -58,8 +58,8 @@ task(void *pvParameters)
     }
     ESP_LOGD(TAG, "\nSerial number: 0x%08" PRIx32 "%08" PRIx32 "\n", (uint32_t)(serial >> 32), (uint32_t)serial);
 
-    utils::average_treshold_timeout<float, float> temperature_filter(TEMPERATURE_THRESHOLD, 3, 10s);
-    utils::average_treshold_timeout<float, float> humidity_filter(HUMIDITY_THRESHOLD, 3, 20s);
+    utils::average_treshold_timeout<float, float> temperature_filter(TEMPERATURE_THRESHOLD, 3, std::chrono::seconds(CONFIG_SENSORS_KA_PERIOD_S));
+    utils::average_treshold_timeout<float, float> humidity_filter(HUMIDITY_THRESHOLD, 3, std::chrono::seconds(CONFIG_SENSORS_KA_PERIOD_S));
 
     while (1)
     {

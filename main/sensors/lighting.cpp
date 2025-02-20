@@ -50,7 +50,7 @@ namespace lighting
             .bitwidth = ADC_BITWIDTH_DEFAULT,
         };
         ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &config));
-        utils::average_treshold_timeout<uint16_t, uint32_t> lighting_filter(CONFIG_LIGHTING_THRESHOLD, 3, 20s);
+        utils::average_treshold_timeout<uint16_t, uint32_t> lighting_filter(CONFIG_LIGHTING_THRESHOLD, 3, std::chrono::seconds(CONFIG_SENSORS_KA_PERIOD_S));
         int adc_max;
         int adc_min;
         {

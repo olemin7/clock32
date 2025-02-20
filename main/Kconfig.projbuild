@@ -131,6 +131,11 @@ menu "App Configuration"
     endmenu
 
     menu "Sensors"
+        config SENSORS_KA_PERIOD_S
+            int "SENSORS_KA_PERIOD_S"
+            default 600
+            help
+                sensor keep alive period sec, resend value if it unchanged
         config LIGHTING_REFRESH
             int "LIGHTING_REFRESH"
             default 200
