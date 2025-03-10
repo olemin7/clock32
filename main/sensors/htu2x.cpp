@@ -56,7 +56,10 @@ task(void *pvParameters)
     default:
         ESP_LOGD(TAG, "Unknown");
     }
-    ESP_LOGD(TAG, "\nSerial number: 0x%08" PRIx32 "%08" PRIx32 "\n", (uint32_t)(serial >> 32), (uint32_t)serial);
+    ESP_LOGD(TAG, "Serial number: 0x%08" PRIx32 "%08" PRIx32, (uint32_t)(serial >> 32), (uint32_t)serial);
+    bool heater;
+    ESP_ERROR_CHECK(si7021_get_heater(&dev, &heater));
+    ESP_LOGI(TAG, "si7021_get_heater %d", heater);
 
     utils::average_treshold_timeout<float, float> temperature_filter(TEMPERATURE_THRESHOLD, 3, std::chrono::seconds(CONFIG_SENSORS_KA_PERIOD_S));
     utils::average_treshold_timeout<float, float> humidity_filter(HUMIDITY_THRESHOLD, 3, std::chrono::seconds(CONFIG_SENSORS_KA_PERIOD_S));

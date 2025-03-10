@@ -31,7 +31,7 @@ namespace proto
     public:
         handler();
         void on_command(const std::string &msg);
-        void add(const std::string cmd, command_t &&handler);
+        void add(const std::string cmd, command_t &&handler); // todo help cmd
     };
 
 } // namespace utils

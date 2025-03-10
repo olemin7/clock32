@@ -59,7 +59,7 @@ sudo ufw allow 1883
 
 sudo /etc/init.d/mosquitto restart
 
-mosquitto_sub -h nas.local -d -t advertisement -h nas.local
+mosquitto_sub -h nas.local -d -t advertisement
 mosquitto_pub -h nas.local -d -t cmd -m "adv"
 
 one terminal
