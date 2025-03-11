@@ -173,6 +173,7 @@ void init()
              //  screen::set_config_brightness(data.min, data.max);
            } 
         return ""; });
+
     commands.add("display", [](auto payload)
                  {
         proto::display_t data;
@@ -213,7 +214,8 @@ void init()
 /************************************
  *
  */
-
+#define UNIT_TEST
+#ifndef UNIT_TEST
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "[APP] Startup..");
@@ -249,3 +251,14 @@ extern "C" void app_main(void)
 
     ESP_LOGI(TAG, "done");
 }
+
+#else
+extern "C"
+{
+    extern void tests_do();
+}
+extern "C" void app_main(void)
+{
+    tests_do();
+}
+#endif

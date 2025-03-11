@@ -127,7 +127,7 @@ menu "App Configuration"
                 Hostname of the main SNTP server.
         config TIMEZONE
             string "TIMEZONE"
-            default "GMT+2"
+            default "GMT-2"
     endmenu
 
     menu "Sensors"
@@ -144,11 +144,11 @@ menu "App Configuration"
         config LIGHTING_THRESHOLD
             int "LIGHTING_THRESHOLD"
             default 10
-        config LIGHTING_MAX_RAW
-            int "LIGHTING_MAX_RAW"
-            default 500
         config LIGHTING_MIN_RAW
             int "LIGHTING_MIN_RAW"
+            default 500
+        config LIGHTING_MAX_RAW
+            int "LIGHTING_MAX_RAW"
             default 4096
     endmenu
 

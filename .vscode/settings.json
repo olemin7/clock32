@@ -77,10 +77,18 @@
         "queue": "cpp",
         "regex": "cpp",
         "*.inc": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "unity.h": "c",
+        "unity_internals.h": "c"
     },
     "git.ignoreLimitWarning": true,
     "idf.pythonInstallPath": "/usr/bin/python",
     "editor.formatOnSaveMode": "file",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "idf.customExtraVars": {
+        "IDF_TARGET": "esp32c3"
+    },
+    "idf.openOcdConfigs": [
+        "board/esp32c3-builtin.cfg"
+    ]
 }

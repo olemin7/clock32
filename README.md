@@ -126,4 +126,6 @@ export IDF_PATH="/home/oleksandrminenko/personal/esp-idf/v5.4/esp-idf"
 custom data when provision
 
 
-
+[test]
+https://www.throwtheswitch.org/unity
+idf.py -p /dev/ttyACM0 flash

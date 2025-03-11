@@ -19,6 +19,8 @@ idf_component_register(
         "proto/json_wrapper.cpp"
         "proto/handler.cpp"
         "proto/defines.cpp"
+        #-----------------
+        "test/tst_utils.c"
        
     INCLUDE_DIRS
         "." 
@@ -32,4 +34,5 @@ idf_component_register(
         spi_flash
         si7021
         max7219
+        unity
     )
