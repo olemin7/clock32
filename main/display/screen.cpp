@@ -22,6 +22,13 @@ namespace screen
     constexpr auto kvs_brightness_max = "brig_max";
     constexpr auto kvs_brightness_min = "brig_min";
 
+    constexpr auto NIGHT_LIGHTING = 50;
+    constexpr auto NIGHT_BRIGHTNESS = 50;
+    constexpr auto LIGHT_LIGHTING = 50;
+    constexpr auto LIGHT_BRIGHTNESS = 50;
+    constexpr auto ​SUNLIGHT_LIGHTING = 50;
+    constexpr auto ​SUNLIGHT_BRIGHTNESS = 50;
+
     max7219_t dev;
 
     uint8_t display_segment_rotation;
@@ -95,11 +102,11 @@ namespace screen
         auto kvss = kvs::handler(TAG);
         bool display_mirrored;
 
-        kvss.get_item_or(kvs_segment_rotation, display_segment_rotation, CONFIG_DISPLAY_SEGMENT_ROTATION);
-        kvss.get_item_or(kvs_segment_upsidedown, display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
-        kvss.get_item_or(kvs_mirrored, display_mirrored, CONFIG_DISPLAY_MIRRORED);
-        kvss.get_item_or(kvs_brightness_max, brightness_max, MAX7219_MAX_BRIGHTNESS / 2);
-        kvss.get_item_or(kvs_brightness_min, brightness_min, 0);
+        kvss.get_value_or(kvs_segment_rotation, display_segment_rotation, CONFIG_DISPLAY_SEGMENT_ROTATION);
+        kvss.get_value_or(kvs_segment_upsidedown, display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
+        kvss.get_value_or(kvs_mirrored, display_mirrored, CONFIG_DISPLAY_MIRRORED);
+        kvss.get_value_or(kvs_brightness_max, brightness_max, MAX7219_MAX_BRIGHTNESS / 2);
+        kvss.get_value_or(kvs_brightness_min, brightness_min, 0);
 
         ESP_LOGI(TAG, "segment_rotation=%d segment_upsidedown=%d mirrored=%d", display_segment_rotation, display_segment_upsidedown, display_mirrored);
         ESP_LOGI(TAG, "brightness_min=%d brightness_max=%d", brightness_min, brightness_max);
@@ -152,17 +159,17 @@ namespace screen
 
         bool error = false;
 
-        if (ESP_OK != kvss.set_item(kvs_segment_rotation, segment_rotation))
+        if (ESP_OK != kvss.set_value(kvs_segment_rotation, segment_rotation))
         {
             error = true;
         }
 
-        if (ESP_OK != kvss.set_item(kvs_segment_upsidedown, segment_upsidedown))
+        if (ESP_OK != kvss.set_value(kvs_segment_upsidedown, segment_upsidedown))
         {
             error = true;
         }
 
-        if (ESP_OK != kvss.set_item(kvs_mirrored, mirrored))
+        if (ESP_OK != kvss.set_value(kvs_mirrored, mirrored))
         {
             error = true;
         }
@@ -183,12 +190,12 @@ namespace screen
 
         bool error = false;
 
-        if (ESP_OK != kvss.set_item(kvs_brightness_max, max))
+        if (ESP_OK != kvss.set_value(kvs_brightness_max, max))
         {
             error = true;
         }
 
-        if (ESP_OK != kvss.set_item(kvs_brightness_min, min))
+        if (ESP_OK != kvss.set_value(kvs_brightness_min, min))
         {
             error = true;
         }

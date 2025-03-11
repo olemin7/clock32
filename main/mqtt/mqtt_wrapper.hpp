@@ -24,7 +24,7 @@ namespace mqtt
       std::string mac;
    };
 
-   using command_cb_t = std::function<void(const std::string &msg)>;
+   using command_cb_t = std::function<std::string(const std::string &msg)>;
 
    class CMQTTWrapper : public idf::mqtt::Client
    {

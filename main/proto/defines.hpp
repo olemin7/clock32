@@ -8,7 +8,7 @@
 
 #include <string>
 #include <inttypes.h>
-#include "handler.hpp"
+
 namespace proto
 {
     struct ldr_t
@@ -17,7 +17,8 @@ namespace proto
         int min;
     };
 
-    bool get(cJSON_opt_t payload, ldr_t &data);
+    bool get(const std::string &payload, ldr_t &data);
+    std::string to_str(const ldr_t &data);
 
     struct display_t
     {
@@ -25,18 +26,26 @@ namespace proto
         bool segment_upsidedown;
         bool mirrored;
     };
-    bool get(cJSON_opt_t payload, display_t &data);
+    bool get(const std::string &payload, display_t &data);
+    std::string to_str(const display_t &data);
+
     struct brightness_t
     {
-        uint8_t min;
-        uint8_t max;
+        struct point_t
+        {
+            uint16_t lighting;
+            uint8_t brightness;
+        };
+        point_t points[3];
     };
-    bool get(cJSON_opt_t payload, brightness_t &data);
+
+    bool get(const std::string &payload, brightness_t &data);
 
     struct timezone_t
     {
         std::string tz;
     };
-    bool get(cJSON_opt_t payload, timezone_t &data);
+    bool get(const std::string &payload, timezone_t &data);
+    std::string to_str(const timezone_t &data);
 
 } // namespace utils

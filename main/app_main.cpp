@@ -37,6 +37,7 @@
 #include "display/tests.hpp"
 #include "kvs.hpp"
 #include "proto/defines.hpp"
+#include "proto/handler.hpp"
 
 using namespace std::chrono_literals;
 static const char *TAG = "main";
@@ -70,7 +71,7 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
     device_info.mac = utils::get_mac();
 
     mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info, [](auto msg)
-                                                    { commands.on_command(msg); });
+                                                    { return commands.on_command(msg); });
 
     blink::stop(blink::BLINK_CONNECTING);
 }
@@ -154,47 +155,59 @@ void init()
     lighting::init();
     commands.add("ldr", [](auto payload)
                  {
-                     proto::ldr_t data;
-                     if (proto::get(payload,data))
-                     {
-                         lighting::update_adc_range(data.min, data.max);
-                     } });
-    commands.add("display", [](auto payload)
-                 {
-                     proto::display_t data;
-                     if (proto::get(payload,data))
-                     {
-                        screen::set_config(data.segment_rotation,data.segment_upsidedown,data.mirrored);
-                     } });
+                    proto::ldr_t data;
+            if (payload && proto::get(payload.value(),data))
+            {
+                lighting::set_adc_min(data.min);
+                lighting::set_adc_max(data.max);
+            }
+            data.max=lighting::get_adc_max();
+            data.min=lighting::get_adc_min();
+        return proto::to_str(data); }, "ldr {min,max}");
 
     commands.add("brightness", [](auto payload)
                  {
-                    proto::brightness_t data;
-                    if (proto::get(payload,data))
-                    {
-                        screen::set_config_brightness(data.min, data.max);
-                    } });
+           proto::brightness_t data;
+           if (payload&&proto::get(payload.value(),data))
+           {
+             //  screen::set_config_brightness(data.min, data.max);
+           } 
+        return ""; });
+    commands.add("display", [](auto payload)
+                 {
+        proto::display_t data;
+        if (payload && proto::get(payload.value(), data))
+        {
+            screen::set_config(data.segment_rotation, data.segment_upsidedown, data.mirrored);
+        }           
+        return proto::to_str(data); }, "display {segment_rotation,segment_upsidedown,mirrored}");
 
     commands.add("restart", [](auto)
-                 { 
-                    ESP_LOGI(TAG, "esp_restart");
-                    vTaskDelay(pdMS_TO_TICKS(500));
-                    esp_restart(); });
+                 {
+            ESP_LOGI(TAG, "esp_restart");
+            vTaskDelay(pdMS_TO_TICKS(500));
+            esp_restart(); 
+            return ""; });
 
     commands.add("factory_reset", [](auto)
-                 { 
+                 {
                     ESP_LOGI(TAG, "factory_reset");
-                    ESP_ERROR_CHECK(nvs_flash_erase()); 
+                    ESP_ERROR_CHECK(nvs_flash_erase());
                     vTaskDelay(pdMS_TO_TICKS(500));
-                    esp_restart(); });
+                    esp_restart();
+                    return "factory_reset"; });
 
     commands.add("timezone", [](auto payload)
                  {
-                    proto::timezone_t data;
-                    if (proto::get(payload,data))
-                    {
-                        clock_tm::update_time_zone(data.tz);
-                    } });
+                     proto::timezone_t data;
+                     if(payload&&proto::get(payload.value(), data))
+                        {
+                            clock_tm::update_time_zone(data.tz);
+                        }
+                    data.tz=clock_tm::get_tz();
+                    return proto::to_str(data); }, "{tz:...}");
+
+    ESP_LOGI(TAG, "%s", commands.get_cmd_list().c_str());
 }
 
 /************************************

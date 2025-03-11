@@ -14,24 +14,26 @@
 
 namespace proto
 {
-    using cJSON_opt_t = std::optional<const cJSON *>;
-    cJSON_opt_t get_field(cJSON_opt_t data, const std::string &name);
-    std::optional<std::string> get_field_string(cJSON_opt_t data, const std::string &name);
-    std::optional<double> get_field_number(cJSON_opt_t data, const std::string &name);
-    std::optional<bool> get_field_bool(cJSON_opt_t data, const std::string &name);
+    using payload_t = std::optional<std::string>;
 
     class handler
     {
     public:
-        using command_t = std::function<void(cJSON_opt_t payload)>;
+        using command_t = std::function<payload_t(const payload_t &&payload)>;
 
     private:
-        std::map<std::string, command_t> handler_;
+        struct cmd_info_t
+        {
+            command_t handler;
+            std::string descriptrion;
+        };
+        std::map<std::string, cmd_info_t> handler_;
 
     public:
         handler();
-        void on_command(const std::string &msg);
-        void add(const std::string cmd, command_t &&handler); // todo help cmd
+        std::string on_command(const std::string &msg);
+        void add(const std::string cmd, command_t &&handler, std::string &&description = "");
+        std::string get_cmd_list() const;
     };
 
 } // namespace utils

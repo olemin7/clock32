@@ -74,7 +74,13 @@
         "iomanip": "cpp",
         "span": "cpp",
         "set": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "regex": "cpp",
+        "*.inc": "cpp",
+        "bitset": "cpp"
     },
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "idf.pythonInstallPath": "/usr/bin/python",
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnSave": true
 }

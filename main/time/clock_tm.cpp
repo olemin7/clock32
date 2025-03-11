@@ -25,10 +25,8 @@ namespace clock_tm
 
     cb_(timeinfo); })
     {
-        auto kvss = kvs::handler(TAG);
-        std::string tz;
-        kvss.get_item_or(kvs_tz, tz, CONFIG_TIMEZONE);
 
+        const auto tz = get_tz();
         ESP_LOGI(TAG, "TZ=%s", tz.c_str());
         setenv("TZ", tz.c_str(), 1);
         tzset();
@@ -41,10 +39,17 @@ namespace clock_tm
         auto kvss = kvs::handler(TAG);
         ESP_LOGI(TAG, "tz %s", tz.c_str());
 
-        if (ESP_OK != kvss.set_item(kvs_tz, tz))
+        if (ESP_OK != kvss.set_value(kvs_tz, tz))
         {
 
             ESP_LOGE(TAG, "error wr");
         }
+    }
+    std::string get_tz()
+    {
+        auto kvss = kvs::handler(TAG);
+        std::string tz;
+        kvss.get_value_or(kvs_tz, tz, CONFIG_TIMEZONE);
+        return tz;
     }
 }

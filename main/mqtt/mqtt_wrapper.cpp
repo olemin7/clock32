@@ -32,7 +32,8 @@ namespace mqtt
         : imqtt::Client(imqtt::BrokerConfiguration{.address = {imqtt::URI{std::string{CONFIG_BROKER_URL}}},
                                                    .security = imqtt::Insecure{}},
                         {}, {.connection = {.disable_auto_reconnect = true}}),
-          device_info_(device_info), device_cmd_cb_(device_cmd_cb), device_cmd_("cmd/" + device_info_.mac), brodcast_cmd_("cmd")
+          device_info_(device_info), device_cmd_cb_(device_cmd_cb),
+          device_cmd_("cmd/" + device_info_.mac), brodcast_cmd_("cmd")
     {
         ESP_LOGI(TAG, "CONFIG_BROKER_URL %s", CONFIG_BROKER_URL);
         //    esp_log_level_set(TAG, ESP_LOG_DEBUG);
@@ -70,7 +71,11 @@ namespace mqtt
         ESP_LOGD(TAG, "Rec:%s", msg.c_str());
         if (device_cmd_.match(event->topic, event->topic_len))
         {
-            device_cmd_cb_(msg);
+            auto response = device_cmd_cb_(msg);
+            if (response.length())
+            {
+                publish("response/" + device_info_.mac, R"({"payload":")" + response + "}");
+            }
         }
         if (brodcast_cmd_.match(event->topic, event->topic_len))
         {

@@ -101,9 +101,14 @@ https://xantorohara.github.io/led-matrix-editor/#7e1818181c181800|7e060c3060663c
 https://github.com/nopnop2002/esp-idf-json
 
 [cmd list]
-mosquitto_pub -d -t cmd/64E833885558 -m '{"cmd":"ldr","payload":{"max":1530,"min":4095}}'
+mosquitto_sub -d -t response/64E833880880 -h nas.local
+
+mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"help"}' -h nas.local
+
+mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"ldr","payload":{"max":1530,"min":4095}}'
 mosquitto_pub -d -t cmd/64E833885558 -m '{"cmd":"restart"}'
 mosquitto_pub -d -t cmd/64E833885558 -m '{"cmd":"brightness","payload":{"max":8,"min":0}}'
+
 
 {"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
 

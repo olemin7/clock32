@@ -30,7 +30,7 @@ namespace kvs
     }
 
     template <>
-    esp_err_t handler::set_item(const std::string &key, const std::string value)
+    esp_err_t handler::set_value(const std::string &key, const std::string value)
     {
         if (!handle_)
         {

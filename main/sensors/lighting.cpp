@@ -51,13 +51,8 @@ namespace lighting
         };
         ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &config));
         utils::average_treshold_timeout<uint16_t, uint32_t> lighting_filter(CONFIG_LIGHTING_THRESHOLD, 3, std::chrono::seconds(CONFIG_SENSORS_KA_PERIOD_S));
-        int adc_max;
-        int adc_min;
-        {
-            auto kvss = kvs::handler(TAG);
-            kvss.get_item_or(kvs_adc_max, adc_max, CONFIG_LIGHTING_MAX_RAW);
-            kvss.get_item_or(kvs_adc_min, adc_min, CONFIG_LIGHTING_MIN_RAW);
-        }
+        const auto adc_max = get_adc_max();
+        const auto adc_min = get_adc_min();
         ESP_LOGI(TAG, "ADC adc_min=%d, adc_max=%d", adc_min, adc_max);
 
         while (1)
@@ -66,6 +61,7 @@ namespace lighting
             ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &raw));
             if (raw) // to mitigate issue WiFi affects ADC1 raw data (IDFGH-6623) espressif/esp-idf#8266
             {
+                raw = ADC_VALUE_MAX - raw; // iverted connection
                 const auto lux = utils::transform_range(adc_min, adc_max, LUX_MIN, LUX_MAX, raw);
 
                 ESP_LOGD(TAG, "ADC raw=%d,lux=%d", raw, lux);
@@ -105,26 +101,39 @@ ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::li
         xTaskCreate(&task, TAG, configMINIMAL_STACK_SIZE + 1024, NULL, 5, NULL);
     }
 
-    void update_adc_range(int min, int max)
+    void set_adc_min(int val)
     {
-        ESP_LOGI(TAG, "min %d, max %d", min, max);
+        ESP_LOGI(TAG, "min %d", val);
         auto kvss = kvs::handler(TAG);
-
-        bool error = false;
-
-        if (ESP_OK != kvss.set_item(kvs_adc_max, max))
-        {
-            error = true;
-        }
-
-        if (ESP_OK != kvss.set_item(kvs_adc_min, min))
-        {
-            error = true;
-        }
-
-        if (error)
+        if (ESP_OK != kvss.set_value(kvs_adc_min, val))
         {
             ESP_LOGE(TAG, "error wr");
         }
+    }
+
+    void set_adc_max(int val)
+    {
+        ESP_LOGI(TAG, "max %d", val);
+        auto kvss = kvs::handler(TAG);
+        if (ESP_OK != kvss.set_value(kvs_adc_max, val))
+        {
+            ESP_LOGE(TAG, "error wr");
+        }
+    }
+
+    int get_adc_max()
+    {
+        auto kvss = kvs::handler(TAG);
+        int val;
+        kvss.get_value_or(kvs_adc_max, val, CONFIG_LIGHTING_MAX_RAW);
+        return val;
+    }
+
+    int get_adc_min()
+    {
+        auto kvss = kvs::handler(TAG);
+        int val;
+        kvss.get_value_or(kvs_adc_min, val, CONFIG_LIGHTING_MIN_RAW);
+        return val;
     }
 }

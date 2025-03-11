@@ -16,6 +16,7 @@ idf_component_register(
         "sensors/sensor_event.cpp"
         "sensors/lighting.cpp"
         "sensors/htu2x.cpp"
+        "proto/json_wrapper.cpp"
         "proto/handler.cpp"
         "proto/defines.cpp"
        

@@ -29,6 +29,16 @@ namespace screen
     esp_err_t set_config(uint8_t segment_rotation,
                          bool segment_upsidedown,
                          bool mirrored);
+
+    enum ambient_t
+    {
+        am_night = 0,
+        am_light,
+        am_​sunlight,
+    };
+    esp_err_t set_config_brightness(ambient_t point, uint16_t lighting, uint8_t brightness);
+    void get_config_brightness(ambient_t point, uint16_t &lighting, uint8_t &brightness);
+
     esp_err_t set_config_brightness(uint8_t min, uint8_t max);
 
 }; // namespace blink

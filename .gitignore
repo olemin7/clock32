@@ -4,3 +4,4 @@ sdkconfig.old
 *.b#*
 *.s#*
 *.swp
+.cache/

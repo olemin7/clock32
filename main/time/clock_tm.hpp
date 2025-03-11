@@ -17,4 +17,5 @@ namespace clock_tm
     };
 
     void update_time_zone(const std::string &tz);
+    std::string get_tz();
 }
