@@ -20,7 +20,7 @@ idf_component_register(
         "proto/handler.cpp"
         "proto/defines.cpp"
         #-----------------
-        "test/tst_utils.c"
+        "test/tst_utils.cpp"
        
     INCLUDE_DIRS
         "." 

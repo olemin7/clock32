@@ -253,12 +253,12 @@ extern "C" void app_main(void)
 }
 
 #else
-extern "C"
-{
-    extern void tests_do();
-}
+
+#include "unity.h"
+void do_tests_utils();
+
 extern "C" void app_main(void)
 {
-    tests_do();
+    do_tests_utils();
 }
 #endif
