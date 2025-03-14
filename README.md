@@ -107,8 +107,8 @@ mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"help"}' -h nas.local
 
 mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"ldr","payload":{"max":1530,"min":4095}}'
 mosquitto_pub -d -t cmd/64E833885558 -m '{"cmd":"restart"}'
-mosquitto_pub -d -t cmd/64E833885558 -m '{"cmd":"brightness","payload":{"max":8,"min":0}}'
 
+mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
 
 {"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
 

@@ -66,9 +66,10 @@ namespace proto
         auto root = json_wrapper::read_root(payload);
 
         const auto points = root.get_field("points");
-        if (points.get_array_size().value_or(0) == 3)
+        const auto count = points.get_array_size().value_or(0);
+        if (count)
         {
-            for (int i = 0; i != 3; i++)
+            for (int i = 0; i != count; i++)
             {
                 auto point = points.get_array_item(i);
                 auto lighting = point.get_field_number("lighting");
@@ -77,8 +78,7 @@ namespace proto
                 {
                     return false;
                 }
-                data.points[i].lighting = lighting.value();
-                data.points[i].brightness = brightness.value();
+                data.points.push_back({lighting.value(), brightness.value()});
             }
             return true;
         }
@@ -88,11 +88,24 @@ namespace proto
     std::string to_str(const brightness_t &data)
     {
         std::stringstream ss;
-
-        // ss << R"({"segment_rotation":)" << data.segment_rotation;
-        // ss << R"(, "segment_upsidedown":)" << data.segment_upsidedown;
-        // ss << R"(, "mirrored":)" << data.mirrored;
-        // ss << R"(})";
+        ss << R"({"points":[)";
+        bool first = true;
+        for (auto &point : data.points)
+        {
+            if (!first)
+            {
+                ss << ",";
+            }
+            else
+            {
+                first = true;
+            }
+            ss << "{";
+            ss << R"( "lighting":)" << point.first;
+            ss << R"(, "brightness":)" << (unsigned)point.second;
+            ss << "}";
+        }
+        ss << "]}";
         return ss.str();
     }
 

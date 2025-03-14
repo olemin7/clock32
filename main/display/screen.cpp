@@ -19,8 +19,7 @@ namespace screen
     constexpr auto kvs_segment_rotation = "s_rotation";
     constexpr auto kvs_segment_upsidedown = "s_upsidedown";
     constexpr auto kvs_mirrored = "mirrored";
-    constexpr auto kvs_brightness_max = "brig_max";
-    constexpr auto kvs_brightness_min = "brig_min";
+    constexpr std::string kvs_brightness = "brig";
 
     constexpr auto NIGHT_LIGHTING = 50;
     constexpr auto NIGHT_BRIGHTNESS = 50;
@@ -33,15 +32,14 @@ namespace screen
 
     uint8_t display_segment_rotation;
     bool display_segment_upsidedown;
-    uint8_t brightness_max;
-    uint8_t brightness_min;
+    std::vector<brightness_point_t> brightness_;
 
     void ev_brightness(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
     {
         static auto pre_level = uint8_t{0};
         const auto update = (sensor_event::lighting_t *)event_data;
-
-        const auto brightness = utils::transform_range(sensor_event::LUX_MIN, sensor_event::LUX_MAX, brightness_min, brightness_max, update->val);
+        ESP_LOGD(TAG, "lighting=%u", update->val);
+        const auto brightness = utils::transform_ranges(brightness_, update->val);
         if (brightness != pre_level)
         {
             pre_level = brightness;
@@ -98,18 +96,16 @@ namespace screen
 
     void init()
     {
-        //  esp_log_level_set(TAG, ESP_LOG_DEBUG);
+        esp_log_level_set(TAG, ESP_LOG_DEBUG);
         auto kvss = kvs::handler(TAG);
         bool display_mirrored;
 
         kvss.get_value_or(kvs_segment_rotation, display_segment_rotation, CONFIG_DISPLAY_SEGMENT_ROTATION);
         kvss.get_value_or(kvs_segment_upsidedown, display_segment_upsidedown, CONFIG_DISPLAY_SEGMENT_UPSIDEDOWN);
         kvss.get_value_or(kvs_mirrored, display_mirrored, CONFIG_DISPLAY_MIRRORED);
-        kvss.get_value_or(kvs_brightness_max, brightness_max, MAX7219_MAX_BRIGHTNESS / 2);
-        kvss.get_value_or(kvs_brightness_min, brightness_min, 0);
+        brightness_ = get_config_brightness();
 
         ESP_LOGI(TAG, "segment_rotation=%d segment_upsidedown=%d mirrored=%d", display_segment_rotation, display_segment_upsidedown, display_mirrored);
-        ESP_LOGI(TAG, "brightness_min=%d brightness_max=%d", brightness_min, brightness_max);
 
         // Configure SPI bus
         spi_bus_config_t cfg = {
@@ -182,29 +178,73 @@ namespace screen
         return ESP_OK;
     }
 
-    esp_err_t set_config_brightness(uint8_t min, uint8_t max)
+    esp_err_t set_config_brightness(const std::vector<brightness_point_t> &points)
+    {
+        const auto sz = points.size();
+        ESP_LOGI(TAG, "brightness points=%d", sz);
+        if (sz == 0)
+        {
+            return ESP_OK;
+        }
+        do
+        {
+            auto kvss = kvs::handler(TAG);
+
+            if (ESP_OK != kvss.set_value(kvs_brightness, sz))
+            {
+                break;
+            }
+            size_t index = 0;
+            for (const auto &point : points)
+            {
+                const auto packed = point.first << 4 | (point.second & 0xf);
+                if (ESP_OK != kvss.set_value(kvs_brightness + std::to_string(index), packed))
+                {
+                    break;
+                }
+                index++;
+            }
+            if (index != sz)
+            {
+                return ESP_OK;
+            }
+        } while (0);
+
+        ESP_LOGE(TAG, "error wr");
+        return ESP_FAIL;
+    }
+
+    std::vector<brightness_point_t> get_config_brightness()
     {
         auto kvss = kvs::handler(TAG);
-
-        ESP_LOGI(TAG, "brightness_min=%d brightness_max=%d", min, max);
-
-        bool error = false;
-
-        if (ESP_OK != kvss.set_value(kvs_brightness_max, max))
+        do
         {
-            error = true;
-        }
+            size_t sz;
+            if (ESP_OK != kvss.get_value(kvs_brightness, sz) || sz == 0)
+            {
+                break;
+            }
 
-        if (ESP_OK != kvss.set_value(kvs_brightness_min, min))
-        {
-            error = true;
-        }
+            std::vector<brightness_point_t> points;
+            size_t index;
+            for (index = 0; index < sz; index++)
+            {
+                uint16_t packed;
 
-        if (error)
-        {
-            ESP_LOGE(TAG, "error wr");
-        }
-
-        return ESP_OK;
+                if (ESP_OK != kvss.get_value(kvs_brightness + std::to_string(index), packed))
+                {
+                    break;
+                }
+                points.push_back({packed >> 4, packed & 0xf});
+                index++;
+            }
+            if (index == sz)
+            {
+                return points;
+            }
+        } while (0);
+        // default
+        ESP_LOGD(TAG, "used default brightness", );
+        return {{200, 0}, {700, 15}};
     }
 }

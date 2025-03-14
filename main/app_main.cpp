@@ -167,12 +167,13 @@ void init()
 
     commands.add("brightness", [](auto payload)
                  {
-           proto::brightness_t data;
-           if (payload&&proto::get(payload.value(),data))
-           {
-             //  screen::set_config_brightness(data.min, data.max);
-           } 
-        return ""; });
+        proto::brightness_t data;
+        if (payload && proto::get(payload.value(), data))
+        {
+            screen::set_config_brightness(data.points);
+        }
+        data.points=screen::get_config_brightness();
+        return proto::to_str(data); }, R"("points":[{"lighting":1530,"brightness":10}]")");
 
     commands.add("display", [](auto payload)
                  {
@@ -180,33 +181,33 @@ void init()
         if (payload && proto::get(payload.value(), data))
         {
             screen::set_config(data.segment_rotation, data.segment_upsidedown, data.mirrored);
-        }           
+        }
         return proto::to_str(data); }, "display {segment_rotation,segment_upsidedown,mirrored}");
 
     commands.add("restart", [](auto)
                  {
-            ESP_LOGI(TAG, "esp_restart");
-            vTaskDelay(pdMS_TO_TICKS(500));
-            esp_restart(); 
-            return ""; });
+        ESP_LOGI(TAG, "esp_restart");
+        vTaskDelay(pdMS_TO_TICKS(500));
+        esp_restart();
+        return ""; });
 
     commands.add("factory_reset", [](auto)
                  {
-                    ESP_LOGI(TAG, "factory_reset");
-                    ESP_ERROR_CHECK(nvs_flash_erase());
-                    vTaskDelay(pdMS_TO_TICKS(500));
-                    esp_restart();
-                    return "factory_reset"; });
+        ESP_LOGI(TAG, "factory_reset");
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        vTaskDelay(pdMS_TO_TICKS(500));
+        esp_restart();
+        return "factory_reset"; });
 
     commands.add("timezone", [](auto payload)
                  {
-                     proto::timezone_t data;
-                     if(payload&&proto::get(payload.value(), data))
-                        {
-                            clock_tm::update_time_zone(data.tz);
-                        }
-                    data.tz=clock_tm::get_tz();
-                    return proto::to_str(data); }, "{tz:...}");
+        proto::timezone_t data;
+        if (payload && proto::get(payload.value(), data))
+        {
+            clock_tm::update_time_zone(data.tz);
+        }
+        data.tz = clock_tm::get_tz();
+        return proto::to_str(data); }, "{tz:...}");
 
     ESP_LOGI(TAG, "%s", commands.get_cmd_list().c_str());
 }
@@ -214,7 +215,7 @@ void init()
 /************************************
  *
  */
-#define UNIT_TEST
+// #define UNIT_TEST
 #ifndef UNIT_TEST
 extern "C" void app_main(void)
 {

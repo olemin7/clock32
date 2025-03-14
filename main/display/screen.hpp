@@ -30,15 +30,7 @@ namespace screen
                          bool segment_upsidedown,
                          bool mirrored);
 
-    enum ambient_t
-    {
-        am_night = 0,
-        am_light,
-        am_​sunlight,
-    };
-    esp_err_t set_config_brightness(ambient_t point, uint16_t lighting, uint8_t brightness);
-    void get_config_brightness(ambient_t point, uint16_t &lighting, uint8_t &brightness);
-
-    esp_err_t set_config_brightness(uint8_t min, uint8_t max);
-
+    using brightness_point_t = std::pair<uint16_t, uint8_t>; // lighting,brightness
+    esp_err_t set_config_brightness(const std::vector<brightness_point_t> &points);
+    std::vector<brightness_point_t> get_config_brightness();
 }; // namespace blink

@@ -8,6 +8,7 @@
 
 #include <string>
 #include <inttypes.h>
+#include <vector>
 
 namespace proto
 {
@@ -31,15 +32,12 @@ namespace proto
 
     struct brightness_t
     {
-        struct point_t
-        {
-            uint16_t lighting;
-            uint8_t brightness;
-        };
-        point_t points[3];
+        using point_t = std::pair<uint16_t, uint8_t>; // lighting,brightness
+        std::vector<point_t> points;
     };
 
     bool get(const std::string &payload, brightness_t &data);
+    std::string to_str(const brightness_t &data);
 
     struct timezone_t
     {
