@@ -13,6 +13,11 @@ namespace proto
 {
     //  static const char *TAG = "proto_defines";
 
+    std::string to_string(bool val)
+    {
+        return val ? "true" : "false";
+    }
+
     bool get(const std::string &payload, ldr_t &ldr)
     {
         auto root = json_wrapper::read_root(payload);
@@ -54,9 +59,9 @@ namespace proto
     {
         std::stringstream ss;
 
-        ss << R"({"segment_rotation":)" << data.segment_rotation;
-        ss << R"(, "segment_upsidedown":)" << data.segment_upsidedown;
-        ss << R"(, "mirrored":)" << data.mirrored;
+        ss << R"({"segment_rotation":)" << (unsigned)data.segment_rotation;
+        ss << R"(, "segment_upsidedown":)" << to_string(data.segment_upsidedown);
+        ss << R"(, "mirrored":)" << to_string(data.mirrored);
         ss << R"(})";
         return ss.str();
     }
@@ -98,11 +103,11 @@ namespace proto
             }
             else
             {
-                first = true;
+                first = false;
             }
             ss << "{";
-            ss << R"( "lighting":)" << point.first;
-            ss << R"(, "brightness":)" << (unsigned)point.second;
+            ss << R"("lighting":)" << point.first;
+            ss << R"(,"brightness":)" << (unsigned)point.second;
             ss << "}";
         }
         ss << "]}";

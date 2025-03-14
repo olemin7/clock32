@@ -74,7 +74,7 @@ namespace mqtt
             auto response = device_cmd_cb_(msg);
             if (response.length())
             {
-                publish("response/" + device_info_.mac, R"({"payload":")" + response + "}");
+                publish("response/" + device_info_.mac, R"({"payload":)" + response + "}");
             }
         }
         if (brodcast_cmd_.match(event->topic, event->topic_len))

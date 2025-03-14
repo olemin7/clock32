@@ -37,8 +37,11 @@ namespace proto
             auto it = handler_.find(cmd.value());
             if (it != handler_.end())
             {
-                auto payload = root.get_field_string("payload");
-
+                auto payload = root.get_field_as_string("payload");
+                if (!payload)
+                {
+                    ESP_LOGI(TAG, "!payload");
+                }
                 response = it->second.handler(std::move(payload));
             }
             else

@@ -32,6 +32,20 @@ namespace json_wrapper
         return read(get_field_(name));
     }
 
+    std::optional<std::string> read::get_field_as_string(const std::string &name) const
+    {
+        const auto field = get_field_(name);
+        ESP_LOGD(TAG, "field %d name %s", field != nullptr, name.c_str());
+        if (field)
+        {
+            auto c_str = cJSON_PrintUnformatted(field);
+            std::string res = c_str;
+            cJSON_free(c_str);
+            return {res};
+        }
+        return {};
+    }
+
     std::optional<std::string> read::get_field_string(const std::string &name) const
     {
         const auto field = get_field_(name);
@@ -39,7 +53,7 @@ namespace json_wrapper
         {
             return {};
         }
-        return field->valuestring;
+        return {field->valuestring};
     }
 
     std::optional<double> read::get_field_number(const std::string &name) const

@@ -30,6 +30,10 @@ namespace screen
                          bool segment_upsidedown,
                          bool mirrored);
 
+    void get_config(uint8_t &segment_rotation,
+                    bool &segment_upsidedown,
+                    bool &mirrored);
+
     using brightness_point_t = std::pair<uint16_t, uint8_t>; // lighting,brightness
     esp_err_t set_config_brightness(const std::vector<brightness_point_t> &points);
     std::vector<brightness_point_t> get_config_brightness();

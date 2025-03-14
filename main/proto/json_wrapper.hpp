@@ -26,6 +26,7 @@ namespace json_wrapper
         }
 
         read get_field(const std::string &name) const;
+        std::optional<std::string> get_field_as_string(const std::string &name) const; // any field return as string
         std::optional<std::string> get_field_string(const std::string &name) const;
         std::optional<double> get_field_number(const std::string &name) const;
         std::optional<bool> get_field_bool(const std::string &name) const;

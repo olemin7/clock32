@@ -156,8 +156,10 @@ void init()
     commands.add("ldr", [](auto payload)
                  {
                     proto::ldr_t data;
+                    ESP_LOGI(TAG, "esp_restart %s",payload.value_or("non").c_str());
             if (payload && proto::get(payload.value(),data))
             {
+                ESP_LOGI(TAG, "esp_restart");
                 lighting::set_adc_min(data.min);
                 lighting::set_adc_max(data.max);
             }
@@ -167,6 +169,7 @@ void init()
 
     commands.add("brightness", [](auto payload)
                  {
+
         proto::brightness_t data;
         if (payload && proto::get(payload.value(), data))
         {
@@ -182,6 +185,8 @@ void init()
         {
             screen::set_config(data.segment_rotation, data.segment_upsidedown, data.mirrored);
         }
+        screen::get_config(data.segment_rotation,data.segment_upsidedown,data.mirrored)  ;
+
         return proto::to_str(data); }, "display {segment_rotation,segment_upsidedown,mirrored}");
 
     commands.add("restart", [](auto)

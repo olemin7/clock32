@@ -101,14 +101,17 @@ https://xantorohara.github.io/led-matrix-editor/#7e1818181c181800|7e060c3060663c
 https://github.com/nopnop2002/esp-idf-json
 
 [cmd list]
-mosquitto_sub -d -t response/64E833880880 -h nas.local
+export TARGET_MAC=64E833885558
+export TARGET_MAC=64E833880880
+export TARGET_MAC=64E83387D7D0
+mosquitto_sub -d -t response/$TARGET_MAC -h nas.local
 
-mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"help"}' -h nas.local
+mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"help"}' -h nas.local
 
-mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"ldr","payload":{"max":1530,"min":4095}}'
-mosquitto_pub -d -t cmd/64E833885558 -m '{"cmd":"restart"}'
+mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"ldr","payload":{"min":100,"max":3000}}' -h nas.local
+mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"restart"}' -h nas.local
 
-mosquitto_pub -d -t cmd/64E833880880 -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
+mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
 
 {"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
 
@@ -129,3 +132,6 @@ custom data when provision
 [test]
 https://www.throwtheswitch.org/unity
 idf.py -p /dev/ttyACM0 flash
+
+[mink]
+long press on boot btn ->reprovision
