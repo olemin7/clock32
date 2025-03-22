@@ -163,13 +163,13 @@ menu "App Configuration"
             help
                 SEGMENT_ROTATION
         config DISPLAY_SEGMENT_UPSIDEDOWN
-            bool "DISPLAY_SEGMENT_UPSIDEDOWN"
-            default false
+            int "DISPLAY_SEGMENT_UPSIDEDOWN"
+            default 0
             help
                 SEGMENT_UPSIDEDOWN
         config DISPLAY_MIRRORED
-            bool "DISPLAY_MIRRORED"
-            default false
+            int "DISPLAY_MIRRORED"
+            default 0
             help
                 DISPLAY_MIRRORED
 
