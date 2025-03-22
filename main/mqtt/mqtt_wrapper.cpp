@@ -95,9 +95,6 @@ namespace mqtt
 
         publish(CONFIG_MQTT_TOPIC_ADVERTISEMENT, info);
         publish_device_brunch("ip", device_info_.ip);
-        int rssi;
-        ESP_ERROR_CHECK(esp_wifi_sta_get_rssi(&rssi));
-        publish_device_brunch("rssi", rssi);
     }
 
 } // namespace mqtt

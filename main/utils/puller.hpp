@@ -1,43 +1,38 @@
-
 #pragma once
 
 #include <functional>
+#include <chrono>
+#include "esp_timer_cxx.hpp"
 
 namespace utils
 {
 
     template <typename T>
-    class observable
+    class puller
     {
-    public:
-        using observable_t = std::function<void(const T &subject)>;
-
     private:
-        std::vector<observable_t> observers_;
+        using getter_t = std::function<bool(T &val)>;
+        using onchange_cb_t = std::function<void(const T &val)>;
+        bool first_force_ = true;
+        T val_;
+        getter_t getter_;
+        onchange_cb_t onchange_cb_;
+        idf::esp_timer::ESPTimer minute_timer_;
 
     public:
-        observable() = default;
-        /**
-         * @brief subscribe observer to subject, once subject is changed, update method of observer will be called
-         * @param observer[in] A shared pointer to observer object for tracking
-         */
-        void subscribe(observable_data_t observer)
+        puller(getter_t &&getter, const std::chrono::milliseconds period, onchange_cb_t &&onchange_cb)
+            : getter_(getter), onchange_cb_(onchange_cb), minute_timer_([this]()
+                                                                        { 
+                                                                            T tmp;
+                                                                            if(getter_(tmp)&&(first_force_ ||(tmp!=val_))){
+                                                                                first_force_=false;
+                                                                                val_=tmp;
+                                                                                onchange_cb_(val_);
+                                                                            } }, "puller")
         {
-            observers_.push_back(observer);
+            minute_timer_.start_periodic(period);
         }
-
-        /**
-         * @brief For updating subject
-         * @param subject[in]
-         */
-        virtual void notify(const T &subject)
-        {
-            for (auto o : observers_)
-            {
-                o(subject);
-            }
-        }
-        virtual ~observable() = default;
+        ~puller() = default;
     };
 
 }

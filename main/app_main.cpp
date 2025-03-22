@@ -25,7 +25,6 @@
 #include "provision.h"
 #include "mqtt/mqtt_wrapper.hpp"
 #include "display/blink.hpp"
-#include "utils/utils.hpp"
 #include "time/sntp.hpp"
 #include "time/clock_tm.hpp"
 #include "iot_button.h"
@@ -36,6 +35,8 @@
 #include "display/layers.hpp"
 #include "display/tests.hpp"
 #include "utils/kvs.hpp"
+#include "utils/utils.hpp"
+#include "utils/puller.hpp"
 #include "proto/defines.hpp"
 #include "proto/handler.hpp"
 
@@ -48,6 +49,7 @@ layers::layers diplay;
 
 std::unique_ptr<mqtt::CMQTTWrapper> mqtt_mng = nullptr;
 std::unique_ptr<clock_tm::clock> clock_ptr = nullptr;
+std::unique_ptr<utils::puller<int>> rssi_ptr = nullptr;
 button_handle_t btn_ptr = nullptr;
 
 proto::handler commands;
@@ -72,6 +74,11 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
 
     mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info, [](auto msg)
                                                     { return commands.on_command(msg); });
+    rssi_ptr = std::make_unique<utils::puller<int>>([](int &rssi)
+                                                    { return ESP_OK == esp_wifi_sta_get_rssi(&rssi); },
+                                                    60s * 5, [](int rssi)
+                                                    {if(mqtt_mng){
+                                                   mqtt_mng->publish_device_brunch("rssi", rssi);} });
 
     blink::stop(blink::BLINK_CONNECTING);
 }
@@ -80,6 +87,7 @@ static void event_lost_ip_handler(void *arg, esp_event_base_t event_base, int32_
 {
     blink::start(blink::BLINK_CONNECTING);
     ESP_LOGI(TAG, "event_lost_ip_handler");
+    rssi_ptr.reset();
     mqtt_mng.reset();
 }
 

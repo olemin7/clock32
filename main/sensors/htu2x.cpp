@@ -14,7 +14,7 @@
 #include <chrono>
 #include "esp_log.h"
 #include "sensor_event.hpp"
-#include "average_treshold.hpp"
+#include "utils/average_treshold.hpp"
 #include "utils/utils.hpp"
 
 using namespace std::chrono_literals;
