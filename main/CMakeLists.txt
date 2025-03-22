@@ -2,9 +2,7 @@ idf_component_register(
     SRCS
         "app_main.cpp" 
         "mqtt/mqtt_wrapper.cpp" 
-        "utils.cpp" 
         "provision.c"
-        "kvs.cpp"
         "time/sntp.cpp"
         "time/clock_tm.cpp"
         "display/blink.cpp" 
@@ -19,6 +17,8 @@ idf_component_register(
         "proto/json_wrapper.cpp"
         "proto/handler.cpp"
         "proto/defines.cpp"
+        "utils/utils.cpp" 
+        "utils/kvs.cpp"
         #-----------------
         "test/tst_utils.cpp"
        

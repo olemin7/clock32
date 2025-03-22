@@ -20,8 +20,8 @@
 #include "sdkconfig.h"
 #include "sensor_event.hpp"
 #include "average_treshold.hpp"
-#include "kvs.hpp"
-#include "utils.hpp"
+#include "utils/kvs.hpp"
+#include "utils/utils.hpp"
 
 namespace lighting
 {

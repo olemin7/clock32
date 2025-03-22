@@ -9,8 +9,8 @@
 #include "sensors/sensor_event.hpp"
 #include "font.hpp"
 #include "transformation.hpp"
-#include "kvs.hpp"
-#include "utils.hpp"
+#include "utils/kvs.hpp"
+#include "utils/utils.hpp"
 
 namespace screen
 {

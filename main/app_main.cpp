@@ -25,7 +25,7 @@
 #include "provision.h"
 #include "mqtt/mqtt_wrapper.hpp"
 #include "display/blink.hpp"
-#include "utils.hpp"
+#include "utils/utils.hpp"
 #include "time/sntp.hpp"
 #include "time/clock_tm.hpp"
 #include "iot_button.h"
@@ -35,7 +35,7 @@
 #include "display/screen.hpp"
 #include "display/layers.hpp"
 #include "display/tests.hpp"
-#include "kvs.hpp"
+#include "utils/kvs.hpp"
 #include "proto/defines.hpp"
 #include "proto/handler.hpp"
 
