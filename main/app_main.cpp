@@ -34,6 +34,8 @@
 #include "display/screen.hpp"
 #include "display/layers.hpp"
 #include "display/tests.hpp"
+#include "display/font.hpp"
+#include "display/transformation.hpp"
 #include "utils/kvs.hpp"
 #include "utils/utils.hpp"
 #include "utils/puller.hpp"
@@ -45,7 +47,7 @@ static const char *TAG = "main";
 
 constexpr auto DEVICE_SW = "CLOCK "__DATE__
                            " " __TIME__;
-layers::layers diplay;
+layers::layers display;
 
 std::unique_ptr<mqtt::CMQTTWrapper> mqtt_mng = nullptr;
 std::unique_ptr<clock_tm::clock> clock_ptr = nullptr;
@@ -64,7 +66,7 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
     device_info.ip = utils::to_Str(event->ip_info.ip);
 
     ESP_LOGI(TAG, "Connected with IP Address: %s", device_info.ip.c_str());
-    diplay.show(4, device_info.ip, screen::js_right);
+    display.show(4, device_info.ip, screen::js_right);
 
     /* Signal main application to continue execution */
     xEventGroupSetBits(app_main_event_group, GOT_IP);
@@ -96,7 +98,7 @@ static void event_lost_ip_handler(void *arg, esp_event_base_t event_base, int32_
 static void button_event_cb(void *arg, void *data)
 {
     ESP_LOGW(TAG, "REQ REPROVISION");
-    diplay.show(10, "***");
+    display.show(10, "***");
     blink::start(blink::BLINK_FACTORY_RESET);
     ESP_ERROR_CHECK(provision_reset());
     vTaskDelay(pdMS_TO_TICKS(1000));
@@ -252,11 +254,15 @@ extern "C" void app_main(void)
         if (!clock_ptr)
         {
             clock_ptr = std::make_unique<clock_tm::clock>([](auto timeinfo)
-                                                          {
-            char buffMin[6];
-            sprintf(buffMin, "%u:%02u", timeinfo.tm_hour, timeinfo.tm_min);
-            diplay.show(5, buffMin, screen::js_center);
-            ESP_LOGI(TAG, "clock %s",buffMin); });
+                                                            { display.show(5, [&timeinfo]()
+                                                                            {
+                    char buffMin[6];
+                    const auto cnt=sprintf(buffMin, "%u:%02u", timeinfo.tm_hour, timeinfo.tm_min);
+                    ESP_LOGI(TAG, "clock %s",buffMin); 
+                    const auto image_0 = font::get(buffMin,0);
+                    const u_int8_t space=(8 * CONFIG_DISPLAY_SEGMENTS-image_0.size())/cnt;
+                    const auto image = font::get(buffMin,space);
+                    return transformation::image2buff(image, screen::js_center, 0); }); });
         } });
     //--------------------------------
     ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &mqtt_temperature, NULL));

@@ -21,6 +21,18 @@ namespace layers
         }
     };
 
+    class data_buffer : public idata
+    {
+    private:
+        std::function<screen::buffer_t()> &&buff_;
+
+    public:
+        data_buffer(std::function<screen::buffer_t()> &&buff) : buff_(std::move(buff)) {}
+        screen::buffer_t get() final
+        {
+            return buff_();
+        }
+    };
     layers::layers() {}
 
     std::optional<uint8_t> layers::get_max_priority() const
@@ -69,6 +81,12 @@ namespace layers
                 draw(priority.value());
             }
         }
+    }
+
+    void layers::show(uint8_t priority, std::function<screen::buffer_t()> &&buff)
+    {
+
+        show(priority, std::make_unique<data_buffer>(std::move(buff)));
     }
 
     void layers::show(uint8_t priority, const std::string str, const screen::justify_t justify, const uint8_t offset)
