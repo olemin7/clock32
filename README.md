@@ -75,8 +75,13 @@ https://github.com/nopnop2002/esp-idf-json/tree/master/json-basic-object
 
 [rtc]
 CONFIG_RTC_CLK_SRC ->External 32kHz crystal
+
 [sntp]
 Request interval to update time
+CONFIG_TIMEZONE "GMT-2"
+https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+EET-2EEST,M3.5.0/3,M10.5.0/4
+
 [button]
 todo boot btn to go provision mode?
 
@@ -104,12 +109,16 @@ https://github.com/nopnop2002/esp-idf-json
 export TARGET_MAC=64E833885558
 export TARGET_MAC=64E833880880
 export TARGET_MAC=64E83387D7D0
+export TARGET_MAC=64E8338811DC
 mosquitto_sub -d -t response/$TARGET_MAC -h nas.local
+mosquitto_sub -d -t devices/$TARGET_MAC/# -h nas.local
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"help"}' -h nas.local
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"ldr","payload":{"min":100,"max":3000}}' -h nas.local
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"restart"}' -h nas.local
+
+mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
 

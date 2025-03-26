@@ -115,7 +115,7 @@ namespace screen
             .cascade_size = CONFIG_DISPLAY_SEGMENTS,
             .mirrored = display_mirrored,
         };
-        ESP_ERROR_CHECK(max7219_init_desc(&dev, SPI2_HOST, MAX7219_MAX_CLOCK_SPEED_HZ, GPIO_NUM_5));
+        ESP_ERROR_CHECK(max7219_init_desc(&dev, SPI2_HOST, MAX7219_MAX_CLOCK_SPEED_HZ / 2, GPIO_NUM_5));
         ESP_ERROR_CHECK(max7219_init(&dev));
         ESP_ERROR_CHECK(max7219_clear(&dev));
 

@@ -82,6 +82,7 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
                                                     {if(mqtt_mng){
                                                    mqtt_mng->publish_device_brunch("rssi", rssi);} });
 
+    sntp::start();
     blink::stop(blink::BLINK_CONNECTING);
 }
 
@@ -204,7 +205,7 @@ void init()
         ESP_LOGI(TAG, "esp_restart");
         vTaskDelay(pdMS_TO_TICKS(500));
         esp_restart();
-        return ""; });
+        return "restart"; });
 
     commands.add("factory_reset", [](auto)
                  {
@@ -225,6 +226,22 @@ void init()
         return proto::to_str(data); }, "{tz:...}");
 
     ESP_LOGI(TAG, "%s", commands.get_cmd_list().c_str());
+
+    sntp::init([]()
+               {
+    if (!clock_ptr)
+    {
+    clock_ptr = std::make_unique<clock_tm::clock>([](auto timeinfo)
+                                                    { display.show(5, [&timeinfo]()
+                                                                    {
+            char buffMin[6];
+            const auto cnt=sprintf(buffMin, "%u:%02u", timeinfo.tm_hour, timeinfo.tm_min);
+            ESP_LOGI(TAG, "clock %s",buffMin); 
+            const auto image_0 = font::get(buffMin,0);
+            const u_int8_t space=(8 * CONFIG_DISPLAY_SEGMENTS-image_0.size())/(cnt-1);//space beatween symvols
+            const auto image = font::get(buffMin,std::min(space,(u_int8_t)3));
+            return transformation::image2buff(image, screen::js_center, 0); }); });
+    } });
 }
 
 /************************************
@@ -249,21 +266,6 @@ extern "C" void app_main(void)
     xEventGroupWaitBits(app_main_event_group, GOT_IP, pdTRUE, pdTRUE, portMAX_DELAY);
 
     htu2x::init();
-    sntp::init([]()
-               {
-        if (!clock_ptr)
-        {
-            clock_ptr = std::make_unique<clock_tm::clock>([](auto timeinfo)
-                                                            { display.show(5, [&timeinfo]()
-                                                                            {
-                    char buffMin[6];
-                    const auto cnt=sprintf(buffMin, "%u:%02u", timeinfo.tm_hour, timeinfo.tm_min);
-                    ESP_LOGI(TAG, "clock %s",buffMin); 
-                    const auto image_0 = font::get(buffMin,0);
-                    const u_int8_t space=(8 * CONFIG_DISPLAY_SEGMENTS-image_0.size())/cnt;
-                    const auto image = font::get(buffMin,space);
-                    return transformation::image2buff(image, screen::js_center, 0); }); });
-        } });
     //--------------------------------
     ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_temperature, &mqtt_temperature, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(sensor_event::event, sensor_event::internall_humidity, &mqtt_humidity, NULL));

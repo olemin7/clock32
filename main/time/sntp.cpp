@@ -49,7 +49,6 @@ namespace sntp
         {
                 ESP_LOGI(TAG, "init");
                 onsync_cb_ = std::move(onsync_cb);
-#if LWIP_DHCP_GET_NTP_SRV
                 /**
                  * NTP server address could be acquired via DHCP,
                  * see following menuconfig options:
@@ -70,41 +69,13 @@ namespace sntp
                 config.sync_cb = time_sync_notification_cb; // only if we need the notification function
                 esp_netif_sntp_init(&config);
 
-#endif /* LWIP_DHCP_GET_NTP_SRV */
-
-#if LWIP_DHCP_GET_NTP_SRV
-                ESP_LOGI(TAG, "Starting SNTP");
-                esp_netif_sntp_start();
-#if LWIP_IPV6 && SNTP_MAX_SERVERS > 2
-                /* This demonstrates using IPv6 address as an additional SNTP server
-                 * (statically assigned IPv6 address is also possible)
-                 */
-                ip_addr_t ip6;
-                if (ipaddr_aton("2a01:3f7::1", &ip6))
-                { // ipv6 ntp source "ntp.netnod.se"
-                        esp_sntp_setserver(2, &ip6);
-                }
-#endif /* LWIP_IPV6 */
-
-#else
-                ESP_LOGI(TAG, "Initializing and starting SNTP");
-#if CONFIG_LWIP_SNTP_MAX_SERVERS > 1
-                /* This demonstrates configuring more than one server
-                 */
-                esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(2,
-                                                                                  ESP_SNTP_SERVER_LIST(CONFIG_SNTP_TIME_SERVER, "pool.ntp.org"));
-#else
-                /*
-                 * This is the basic default config with one server and starting the service
-                 */
-                esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_SNTP_TIME_SERVER);
-#endif
-                config.sync_cb = time_sync_notification_cb; // Note: This is only needed if we want
-                config.wait_for_sync = false;
-                config.server_from_dhcp = true;
-                ESP_ERROR_CHECK(esp_netif_sntp_init(&config));
-#endif
                 print_servers();
+        }
+
+        void start()
+        {
+                ESP_LOGI(TAG, "Starting/Restarting SNTP");
+                esp_netif_sntp_start();
         }
 
 }
