@@ -36,7 +36,7 @@ namespace mqtt
       // ESPTimer timer_
    public:
       CMQTTWrapper(device_info_t &device_info, command_cb_t &&device_cmd_cb);
-      virtual ~CMQTTWrapper();
+      virtual ~CMQTTWrapper() = default;
       void publish(const std::string &topic, const std::string &message);
       template <typename T>
       void publish(const std::string &topic, T value)

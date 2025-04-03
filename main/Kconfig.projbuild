@@ -146,7 +146,7 @@ menu "App Configuration"
             default 10
         config LIGHTING_MIN_RAW
             int "LIGHTING_MIN_RAW"
-            default 500
+            default 10
         config LIGHTING_MAX_RAW
             int "LIGHTING_MAX_RAW"
             default 4096

@@ -39,12 +39,6 @@ namespace mqtt
         //    esp_log_level_set(TAG, ESP_LOG_DEBUG);
     };
 
-    CMQTTWrapper::~CMQTTWrapper()
-    {
-        ESP_LOGD(TAG, "mqtt_wrapper dtor");
-        esp_mqtt_client_destroy(handler.get());
-    }
-
     void CMQTTWrapper::on_connected(esp_mqtt_event_handle_t const /*event*/)
     {
         ESP_LOGI(TAG, "connected");

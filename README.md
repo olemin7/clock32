@@ -120,7 +120,7 @@ mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"restart"}' -h nas.local
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
 
-mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
+mosquitto_pub -d -t cmd/$TARGET_MAC -m -h nas.local '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' 
 
 {"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
 

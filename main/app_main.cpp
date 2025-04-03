@@ -16,7 +16,6 @@
 #include "freertos/queue.h"
 
 #include "esp_exception.hpp"
-#include "esp_wifi.h"
 #include "esp_err.h"
 #include "esp_timer_cxx.hpp"
 #include <esp_event.h>
@@ -59,6 +58,15 @@ proto::handler commands;
 static EventGroupHandle_t app_main_event_group;
 constexpr int GOT_IP = BIT0;
 
+template <typename T>
+void mqtt_send_sensor(const std::string &field, T value)
+{
+    if (mqtt_mng)
+    {
+        mqtt_mng->publish_device_brunch(field, value);
+    }
+}
+
 static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     mqtt::device_info_t device_info;
@@ -79,8 +87,9 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
     rssi_ptr = std::make_unique<utils::puller<int>>([](int &rssi)
                                                     { return ESP_OK == esp_wifi_sta_get_rssi(&rssi); },
                                                     60s * 5, [](int rssi)
-                                                    {if(mqtt_mng){
-                                                   mqtt_mng->publish_device_brunch("rssi", rssi);} });
+                                                    {
+                                                        ESP_LOGI(TAG, "RSSI: %d", rssi); 
+                                                        mqtt_send_sensor("rssi", rssi); });
 
     sntp::start();
     blink::stop(blink::BLINK_CONNECTING);
@@ -104,15 +113,6 @@ static void button_event_cb(void *arg, void *data)
     ESP_ERROR_CHECK(provision_reset());
     vTaskDelay(pdMS_TO_TICKS(1000));
     esp_restart();
-}
-
-template <typename T>
-void mqtt_send_sensor(const std::string &field, T value)
-{
-    if (mqtt_mng)
-    {
-        mqtt_mng->publish_device_brunch(field, value);
-    }
 }
 
 void mqtt_temperature(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*event_id*/, void *event_data)
@@ -148,6 +148,7 @@ void init()
     /* Initialize the event loop */
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_got_ip_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_LOST_IP, &event_lost_ip_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &event_lost_ip_handler, NULL));
     blink::init();
     screen::init();
 
