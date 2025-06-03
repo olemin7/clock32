@@ -79,7 +79,10 @@
         "*.inc": "cpp",
         "bitset": "cpp",
         "unity.h": "c",
-        "unity_internals.h": "c"
+        "unity_internals.h": "c",
+        "complex": "cpp",
+        "netfwd": "cpp",
+        "fstream": "cpp"
     },
     "git.ignoreLimitWarning": true,
     "idf.pythonInstallPath": "/usr/bin/python",

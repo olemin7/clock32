@@ -136,7 +136,7 @@ export IDF_PATH="/home/oleksandrminenko/personal/esp-idf/v5.4/esp-idf"
 
 [TODO]
 custom data when provision
-
+http command server
 
 [test]
 https://www.throwtheswitch.org/unity

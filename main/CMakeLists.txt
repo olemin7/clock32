@@ -17,6 +17,7 @@ idf_component_register(
         "proto/json_wrapper.cpp"
         "proto/handler.cpp"
         "proto/defines.cpp"
+        "proto/http_server.cpp"
         "utils/utils.cpp" 
         "utils/kvs.cpp"
         #-----------------
@@ -35,4 +36,5 @@ idf_component_register(
         si7021
         max7219
         unity
+        esp_http_server
     )

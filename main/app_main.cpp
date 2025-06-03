@@ -40,6 +40,7 @@
 #include "utils/puller.hpp"
 #include "proto/defines.hpp"
 #include "proto/handler.hpp"
+#include "proto/http_server.hpp"
 
 using namespace std::chrono_literals;
 static const char *TAG = "main";
@@ -243,6 +244,11 @@ void init()
             const auto image = font::get(buffMin,std::min(space,(u_int8_t)3));
             return transformation::image2buff(image, screen::js_center, 0); }); });
     } });
+    auto &server = http_server::server::get_instance();
+    server.set_uri("/cmd", [](const std::string &payload)
+                   {
+            ESP_LOGI(TAG, "http_server::server::get_instance() %s", payload.c_str());
+        return commands.on_command(payload); });
 }
 
 /************************************
