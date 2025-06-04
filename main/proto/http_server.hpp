@@ -2,6 +2,8 @@
 #include <string>
 #include <functional>
 #include <map>
+#include "esp_http_server.h"
+
 namespace http_server
 {
     class server
@@ -11,7 +13,13 @@ namespace http_server
 
     private:
         std::map<std::string, uri_handler_t> uri_handlers_;
+        httpd_handle_t httpd_ = nullptr;
         server();
+
+        static void disconnect_handler(void *arg, esp_event_base_t event_base,
+                                       int32_t event_id, void *event_data);
+        static void connect_handler(void *arg, esp_event_base_t event_base,
+                                    int32_t event_id, void *event_data);
 
     public:
         static server &get_instance();

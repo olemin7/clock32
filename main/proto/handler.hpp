@@ -25,7 +25,7 @@ namespace proto
         struct cmd_info_t
         {
             command_t handler;
-            std::string descriptrion;
+            std::string description;
         };
         std::map<std::string, cmd_info_t> handler_;
 

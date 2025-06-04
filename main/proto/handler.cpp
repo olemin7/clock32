@@ -78,7 +78,7 @@ namespace proto
                 second = true;
             }
             ss << R"({"cmd":")" << el.first;
-            ss << R"(", "descriptrion":")" << el.second.descriptrion << R"("})";
+            ss << R"(", "description":")" << el.second.description << R"("})";
         }
         ss << "}";
         return ss.str();
