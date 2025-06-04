@@ -46,4 +46,11 @@ namespace proto
     bool get(const std::string &payload, timezone_t &data);
     std::string to_str(const timezone_t &data);
 
+    struct mqtt_t
+    {
+        std::string url;
+    };
+    bool get(const std::string &payload, mqtt_t &data);
+    std::string to_str(const mqtt_t &data);
+
 } // namespace utils

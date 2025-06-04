@@ -227,6 +227,16 @@ void init()
         data.tz = clock_tm::get_tz();
         return proto::to_str(data); }, "{tz:...}");
 
+    commands.add("mqtt", [](auto payload)
+                 {
+        proto::mqtt_t data;
+        if (payload && proto::get(payload.value(), data))
+        {
+            mqtt::set_config(data.url);    
+        }
+        mqtt::get_config(data.url);
+        return proto::to_str(data); }, "{url:...}");
+
     ESP_LOGI(TAG, "%s", commands.get_cmd_list().c_str());
 
     sntp::init([]()

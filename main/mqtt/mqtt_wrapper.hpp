@@ -26,6 +26,9 @@ namespace mqtt
 
    using command_cb_t = std::function<std::string(const std::string &msg)>;
 
+   esp_err_t set_config(std::string url);
+   void get_config(std::string &url);
+
    class CMQTTWrapper : public idf::mqtt::Client
    {
    private:

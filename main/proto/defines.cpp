@@ -136,4 +136,25 @@ namespace proto
         ss << R"("})";
         return ss.str();
     }
+
+    bool get(const std::string &payload, mqtt_t &data)
+    {
+        auto root = json_wrapper::read_root(payload);
+        const auto url = root.get_field_string("url");
+        if (url)
+        {
+            data.url = url.value();
+            return true;
+        }
+        return false;
+    }
+
+    std::string to_str(const mqtt_t &data)
+    {
+        std::stringstream ss;
+
+        ss << R"({"url":")" << data.url;
+        ss << R"("})";
+        return ss.str();
+    }
 }

@@ -17,6 +17,7 @@
 #include <esp_wifi.h>
 #include <esp_log.h>
 #include <memory>
+#include "utils/kvs.hpp"
 
 #include "sdkconfig.h"
 
@@ -27,9 +28,32 @@ namespace mqtt
 
     constexpr auto *TAG = "MQTT";
     constexpr int EMPTY_QUEUE = BIT0;
+    constexpr auto kvs_url = "url";
+
+    esp_err_t set_config(std::string url)
+    {
+        auto kvss = kvs::handler(TAG);
+
+        ESP_LOGI(TAG, "url %s", url.c_str());
+
+        return kvss.set_value(kvs_url, url);
+    }
+
+    void get_config(std::string &url)
+    {
+        auto kvss = kvs::handler(TAG);
+        kvss.get_value_or(kvs_url, url, CONFIG_BROKER_URL);
+    }
+
+    std::string get_config_url()
+    {
+        std::string url;
+        get_config(url);
+        return url;
+    }
 
     CMQTTWrapper::CMQTTWrapper(device_info_t &device_info, command_cb_t &&device_cmd_cb)
-        : imqtt::Client(imqtt::BrokerConfiguration{.address = {imqtt::URI{std::string{CONFIG_BROKER_URL}}},
+        : imqtt::Client(imqtt::BrokerConfiguration{.address = {imqtt::URI{get_config_url()}},
                                                    .security = imqtt::Insecure{}},
                         {}, {.connection = {.disable_auto_reconnect = true}}),
           device_info_(device_info), device_cmd_cb_(device_cmd_cb),
