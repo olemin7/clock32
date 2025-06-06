@@ -482,7 +482,7 @@ CONFIG_EXAMPLE_PROV_USING_BLUEDROID=y
 #
 # MQTT Configuration
 #
-CONFIG_BROKER_URL="mqtt://nas.local"
+CONFIG_BROKER_URL="mqtt://192.168.1.2"
 CONFIG_MQTT_TOPIC_ADVERTISEMENT="advertisement"
 CONFIG_MQTT_TOPIC_BROADCAST="brodcast"
 # end of MQTT Configuration
