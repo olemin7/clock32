@@ -53,4 +53,4 @@ namespace proto
     bool get(const std::string &payload, mqtt_t &data);
     std::string to_str(const mqtt_t &data);
 
-} // namespace utils
+} // namespace proto

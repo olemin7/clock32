@@ -1,4 +1,7 @@
-## Troubleshooting
+# dependency
+git clone git@github.com:olemin7/esp32_idf_libs.git libs
+# Troubleshooting
+
 
 * Program upload failure
 
@@ -29,7 +32,7 @@ GPIO_NUM_10 |     |      |
 GPIO_NUM_20 |     | RX   |
 GPIO_NUM_21 |     | TX   |
 
-#Display MAX7219 
+# Display MAX7219 
 
 
 https://github.com/DiegoPaezA/ESP32-freeRTOS/blob/master/i2c_scanner/main/i2c_scanner.c
@@ -47,7 +50,7 @@ null in the env https://github.com/espressif/idf-eclipse-plugin/issues/535https:
 Check the values in your sdkconfig for LOG_MAXIMUM_LEVEL. It defaults to matching LOG_DEFAULT_LEVEL which limits what values you can use by default.
 
 
-[mqtt test]
+# mqtt test
 sudo apt-get install mosquitto mosquitto-clients
 
 sudo vim /etc/mosquitto/mosquitto.conf 
