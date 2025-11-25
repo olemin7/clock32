@@ -21,26 +21,28 @@
 #include <esp_event.h>
 
 #include "json_helper.hpp"
-#include "provision.h"
-#include "mqtt/mqtt_wrapper.hpp"
-#include "display/blink.hpp"
+#include "libs/provision.hpp"
+#include "libs/mqtt/mqtt_wrapper.hpp"
+#include "libs/blink.hpp"
 #include "time/sntp.hpp"
 #include "time/clock_tm.hpp"
 #include "iot_button.h"
-#include "sensors/sensor_event.hpp"
-#include "sensors/htu2x.hpp"
-#include "sensors/lighting.hpp"
-#include "display/screen.hpp"
-#include "display/layers.hpp"
-#include "display/tests.hpp"
-#include "display/font.hpp"
-#include "display/transformation.hpp"
-#include "utils/kvs.hpp"
-#include "utils/utils.hpp"
-#include "utils/puller.hpp"
-#include "proto/defines.hpp"
-#include "proto/handler.hpp"
-#include "proto/http_server.hpp"
+#include "libs/sensors/sensor_event.hpp"
+#include "libs/sensors/htu2x.hpp"
+#include "libs/sensors/lighting.hpp"
+
+#include "libs/display_MAX7219/screen.hpp"
+#include "libs/display_MAX7219/layers.hpp"
+#include "libs/display_MAX7219/tests.hpp"
+#include "libs/display_MAX7219/font.hpp"
+#include "libs/display_MAX7219/transformation.hpp"
+
+#include "libs/utils/kvs.hpp"
+#include "libs/utils/utils.hpp"
+#include "libs/utils/puller.hpp"
+#include "libs/proto/defines.hpp"
+#include "libs/proto/handler.hpp"
+#include "libs/proto/http_server.hpp"
 
 using namespace std::chrono_literals;
 static const char *TAG = "main";
@@ -83,8 +85,9 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
     device_info.sw = DEVICE_SW;
     device_info.mac = utils::get_mac();
 
-    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info, [](auto msg)
-                                                    { return commands.on_command(msg); });
+    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info,
+                                                    std::make_unique<mqtt::command_cb_t>([](auto msg)
+                                                                                         { return commands.on_command(msg); }));
     rssi_ptr = std::make_unique<utils::puller<int>>([](int &rssi)
                                                     { return ESP_OK == esp_wifi_sta_get_rssi(&rssi); },
                                                     60s * 5, [](int rssi)

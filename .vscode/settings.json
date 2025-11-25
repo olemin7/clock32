@@ -80,6 +80,17 @@
     "unity_internals.h": "c",
     "complex": "cpp",
     "netfwd": "cpp",
-    "fstream": "cpp"
+    "fstream": "cpp",
+    "csignal": "cpp",
+    "any": "cpp",
+    "strstream": "cpp",
+    "cfenv": "cpp",
+    "codecvt": "cpp",
+    "unordered_set": "cpp",
+    "source_location": "cpp",
+    "shared_mutex": "cpp",
+    "stdfloat": "cpp",
+    "typeindex": "cpp",
+    "valarray": "cpp"
   }
 }
