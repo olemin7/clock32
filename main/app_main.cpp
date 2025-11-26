@@ -21,9 +21,9 @@
 #include <esp_event.h>
 
 #include "json_helper.hpp"
-#include "libs/provision.hpp"
+#include "libs/provision/provision.hpp"
 #include "libs/mqtt/mqtt_wrapper.hpp"
-#include "libs/blink.hpp"
+#include "display/blink.hpp"
 #include "time/sntp.hpp"
 #include "time/clock_tm.hpp"
 #include "iot_button.h"
@@ -31,11 +31,11 @@
 #include "libs/sensors/htu2x.hpp"
 #include "libs/sensors/lighting.hpp"
 
-#include "libs/display_MAX7219/screen.hpp"
-#include "libs/display_MAX7219/layers.hpp"
-#include "libs/display_MAX7219/tests.hpp"
-#include "libs/display_MAX7219/font.hpp"
-#include "libs/display_MAX7219/transformation.hpp"
+#include "display/MAX7219/screen.hpp"
+#include "display/MAX7219/layers.hpp"
+#include "display/MAX7219/tests.hpp"
+#include "display/MAX7219/font.hpp"
+#include "display/MAX7219/transformation.hpp"
 
 #include "libs/utils/kvs.hpp"
 #include "libs/utils/utils.hpp"
@@ -262,6 +262,7 @@ void init()
                    {
             ESP_LOGI(TAG, "http_server::server::get_instance() %s", payload.c_str());
         return commands.on_command(payload); });
+    gpio_dump_io_configuration(stdout, (1ULL << 8) | (1ULL << 9) | (1ULL << CONFIG_I2C_MASTER_SDA_IO) | (1ULL << CONFIG_I2C_MASTER_SCL_IO));
 }
 
 /************************************

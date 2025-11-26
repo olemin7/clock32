@@ -17,7 +17,7 @@ set(EXTRA_COMPONENT_DIRS
     ${espidflib_SOURCE_DIR}/components/si7021
     ${espidflib_SOURCE_DIR}/components/esp_idf_lib_helpers
     ${espidflib_SOURCE_DIR}/components/max7219
-    main/libs/display_MAX7219
+    main/libs/display/MAX7219
     )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

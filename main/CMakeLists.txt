@@ -2,10 +2,10 @@ idf_component_register(
     SRCS
         "app_main.cpp" 
         "libs/mqtt/mqtt_wrapper.cpp" 
-        "libs/provision.cpp"
+        "libs/provision/provision.cpp"
         "time/sntp.cpp"
         "time/clock_tm.cpp"
-        "libs/blink.cpp" 
+        "libs/display/blink.cpp" 
         "libs/sensors/sensor_event.cpp"
         "libs/sensors/lighting.cpp"
         "libs/sensors/htu2x.cpp"
@@ -20,6 +20,7 @@ idf_component_register(
        
     INCLUDE_DIRS
         "." 
+        "libs" 
     REQUIRES
         nvs_flash 
         wifi_provisioning 
