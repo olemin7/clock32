@@ -22,7 +22,7 @@
 
 #include "json_helper.hpp"
 #include "libs/provision/provision.hpp"
-#include "libs/mqtt/mqtt_wrapper.hpp"
+#include "libs/mqtt_tools/mqtt_wrapper.hpp"
 #include "display/blink.hpp"
 #include "time/sntp.hpp"
 #include "time/clock_tm.hpp"

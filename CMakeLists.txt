@@ -18,6 +18,7 @@ set(EXTRA_COMPONENT_DIRS
     ${espidflib_SOURCE_DIR}/components/esp_idf_lib_helpers
     ${espidflib_SOURCE_DIR}/components/max7219
     main/libs/display/MAX7219
+    main/libs/mqtt_tools
     )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

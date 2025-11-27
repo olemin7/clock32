@@ -1,7 +1,6 @@
 idf_component_register(
     SRCS
         "app_main.cpp" 
-        "libs/mqtt/mqtt_wrapper.cpp" 
         "libs/provision/provision.cpp"
         "time/sntp.cpp"
         "time/clock_tm.cpp"
@@ -26,11 +25,9 @@ idf_component_register(
         wifi_provisioning 
         json 
         esp_wifi 
-        mqtt 
         driver 
         spi_flash
         si7021
-        max7219
         unity
         esp_http_server
     )
