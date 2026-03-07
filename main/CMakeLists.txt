@@ -2,8 +2,8 @@ idf_component_register(
     SRCS
         "app_main.cpp" 
         "libs/provision/provision.cpp"
-        "time/sntp.cpp"
-        "time/clock_tm.cpp"
+        "libs/sntp/sntp.cpp"
+        "clock_tm.cpp"
         "libs/display/blink.cpp" 
         "libs/sensors/sensor_event.cpp"
         "libs/sensors/lighting.cpp"

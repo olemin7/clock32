@@ -107,23 +107,25 @@ https://xantorohara.github.io/led-matrix-editor/#7e1818181c181800|7e060c3060663c
 
 [json]
 https://github.com/nopnop2002/esp-idf-json
-
-[cmd list]
+# cmd list
 export TARGET_MAC=64E833885558
 export TARGET_MAC=64E833880880
 export TARGET_MAC=64E83387D7D0
 export TARGET_MAC=64E8338811DC
-mosquitto_sub -d -t response/$TARGET_MAC -h nas.local
-mosquitto_sub -d -t devices/$TARGET_MAC/# -h nas.local
+export MOSQUITO_ADDR=192.168.1.2
+mosquitto_sub -d -t response/$TARGET_MAC -h $MOSQUITO_ADDR
+mosquitto_sub -d -t devices/$TARGET_MAC/# -h $MOSQUITO_ADDR
 
-mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"help"}' -h nas.local
+mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"help"}' -h $MOSQUITO_ADDR
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"ldr","payload":{"min":100,"max":3000}}' -h nas.local
-mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"restart"}' -h nas.local
+mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"restart"}' -h $MOSQUITO_ADDR
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
 
-mosquitto_pub -d -t cmd/$TARGET_MAC -m -h nas.local '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' 
+mosquitto_pub -d -t cmd/$TARGET_MAC -m -h  $MOSQUITO_ADDR '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' 
+
+mosquitto_pub -d -t cmd/$TARGET_MAC -m -h  $MOSQUITO_ADDR '{"cmd":"display"}'
 
 {"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
 

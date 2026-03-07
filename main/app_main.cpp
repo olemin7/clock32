@@ -20,12 +20,12 @@
 #include "esp_timer_cxx.hpp"
 #include <esp_event.h>
 
-#include "json_helper.hpp"
-#include "libs/provision/provision.hpp"
-#include "libs/mqtt_tools/mqtt_wrapper.hpp"
+#include "utils/json_helper.hpp"
+#include "provision/provision.hpp"
+#include "mqtt_tools/mqtt_wrapper.hpp"
 #include "display/blink.hpp"
-#include "time/sntp.hpp"
-#include "time/clock_tm.hpp"
+#include "sntp/sntp.hpp"
+#include "clock_tm.hpp"
 #include "iot_button.h"
 #include "libs/sensors/sensor_event.hpp"
 #include "libs/sensors/htu2x.hpp"
@@ -242,7 +242,7 @@ void init()
 
     ESP_LOGI(TAG, "%s", commands.get_cmd_list().c_str());
 
-    sntp::init([]()
+    sntp::init([](auto /*timeinfo*/)
                {
     if (!clock_ptr)
     {
