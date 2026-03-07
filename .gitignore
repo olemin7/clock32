@@ -1,4 +1,4 @@
-main/libs/
+tmp/
 build/
 managed_components/
 sdkconfig.old

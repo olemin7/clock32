@@ -1,25 +1,25 @@
 idf_component_register(
     SRCS
         "app_main.cpp" 
-        "libs/provision/provision.cpp"
-        "libs/sntp/sntp.cpp"
+        "${my_idf_libs_SOURCE_DIR}/provision/provision.cpp"
+        "${my_idf_libs_SOURCE_DIR}/sntp/sntp.cpp"
         "clock_tm.cpp"
-        "libs/display/blink.cpp" 
-        "libs/sensors/sensor_event.cpp"
-        "libs/sensors/lighting.cpp"
-        "libs/sensors/htu2x.cpp"
-        "libs/proto/json_wrapper.cpp"
-        "libs/proto/handler.cpp"
-        "libs/proto/defines.cpp"
-        "libs/proto/http_server.cpp"
-        "libs/utils/utils.cpp" 
-        "libs/utils/kvs.cpp"
+        "${my_idf_libs_SOURCE_DIR}/display/blink.cpp" 
+        "${my_idf_libs_SOURCE_DIR}/sensors/sensor_event.cpp"
+        "${my_idf_libs_SOURCE_DIR}/sensors/lighting.cpp"
+        "${my_idf_libs_SOURCE_DIR}/sensors/htu2x.cpp"
+        "${my_idf_libs_SOURCE_DIR}/proto/json_wrapper.cpp"
+        "${my_idf_libs_SOURCE_DIR}/proto/handler.cpp"
+        "${my_idf_libs_SOURCE_DIR}/proto/defines.cpp"
+        "${my_idf_libs_SOURCE_DIR}/proto/http_server.cpp"
+        "${my_idf_libs_SOURCE_DIR}/utils/utils.cpp" 
+        "${my_idf_libs_SOURCE_DIR}/utils/kvs.cpp"
         #-----------------
-        "libs/test/tst_utils.cpp"
+        "${my_idf_libs_SOURCE_DIR}/test/tst_utils.cpp"
        
     INCLUDE_DIRS
         "." 
-        "libs" 
+        "${my_idf_libs_SOURCE_DIR}" 
     REQUIRES
         nvs_flash 
         wifi_provisioning 

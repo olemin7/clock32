@@ -27,9 +27,9 @@
 #include "sntp/sntp.hpp"
 #include "clock_tm.hpp"
 #include "iot_button.h"
-#include "libs/sensors/sensor_event.hpp"
-#include "libs/sensors/htu2x.hpp"
-#include "libs/sensors/lighting.hpp"
+#include "sensors/sensor_event.hpp"
+#include "sensors/htu2x.hpp"
+#include "sensors/lighting.hpp"
 
 #include "display/MAX7219/screen.hpp"
 #include "display/MAX7219/layers.hpp"
@@ -37,12 +37,12 @@
 #include "display/MAX7219/font.hpp"
 #include "display/MAX7219/transformation.hpp"
 
-#include "libs/utils/kvs.hpp"
-#include "libs/utils/utils.hpp"
-#include "libs/utils/puller.hpp"
-#include "libs/proto/defines.hpp"
-#include "libs/proto/handler.hpp"
-#include "libs/proto/http_server.hpp"
+#include "utils/kvs.hpp"
+#include "utils/utils.hpp"
+#include "utils/puller.hpp"
+#include "proto/defines.hpp"
+#include "proto/handler.hpp"
+#include "proto/http_server.hpp"
 
 using namespace std::chrono_literals;
 static const char *TAG = "main";

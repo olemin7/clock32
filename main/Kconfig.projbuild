@@ -1,6 +1,6 @@
 menu "App Configuration"
-    rsource "libs/provision/provision.projbuild"
-    rsource "libs/mqtt_tools/mqtt.projbuild"                       
+    rsource "../$(MY_ESP_LIBRARIES_PATH)/provision/provision.projbuild"
+    rsource "../$(MY_ESP_LIBRARIES_PATH)/mqtt_tools/mqtt.projbuild"                       
     config SENSORS_COLLECTION_TIMEOUT
         int
         default 5
