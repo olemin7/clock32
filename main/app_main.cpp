@@ -181,7 +181,7 @@ void init()
             }
             data.max=lighting::get_adc_max();
             data.min=lighting::get_adc_min();
-        return proto::to_str(data); }, "ldr {min,max}");
+        return proto::to_str(data); }, "ldr {min,max}", true);
 
     commands.add("brightness", [](auto payload)
                  {
@@ -192,7 +192,7 @@ void init()
             screen::set_config_brightness(data.points);
         }
         data.points=screen::get_config_brightness();
-        return proto::to_str(data); }, R"("points":[{"lighting":1530,"brightness":10}]")");
+        return proto::to_str(data); }, R"("points":[{"lighting":1530,"brightness":10}]")", true);
 
     commands.add("display", [](auto payload)
                  {
@@ -203,7 +203,7 @@ void init()
         }
         screen::get_config(data.segment_rotation,data.segment_upsidedown,data.mirrored)  ;
 
-        return proto::to_str(data); }, "display {segment_rotation,segment_upsidedown,mirrored}");
+        return proto::to_str(data); }, "display {segment_rotation,segment_upsidedown,mirrored}", true);
 
     commands.add("restart", [](auto)
                  {
@@ -228,7 +228,7 @@ void init()
             clock_tm::update_time_zone(data.tz);
         }
         data.tz = clock_tm::get_tz();
-        return proto::to_str(data); }, "{tz:...}");
+        return proto::to_str(data); }, "{tz:...}", true);
 
     commands.add("mqtt", [](auto payload)
                  {
@@ -238,7 +238,7 @@ void init()
             mqtt::set_config(data.url);    
         }
         mqtt::get_config(data.url);
-        return proto::to_str(data); }, "{url:...}");
+        return proto::to_str(data); }, "{url:...}", true);
 
     ESP_LOGI(TAG, "%s", commands.get_cmd_list().c_str());
 
@@ -299,9 +299,11 @@ extern "C" void app_main(void)
 
 #include "unity.h"
 void do_tests_utils();
+void do_tests_handler();
 
 extern "C" void app_main(void)
 {
     do_tests_utils();
+    do_tests_handler();
 }
 #endif

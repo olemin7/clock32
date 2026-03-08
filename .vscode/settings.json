@@ -94,9 +94,9 @@
     "valarray": "cpp"
   },
   "terminal.integrated.env.linux": {
-    // "MY_ESP_LIBRARIES_LOCAL": "+",
-    // "MY_ESP_LIBRARIES_PATH": "/tmp/esp32_idf_libs"
-    "MY_ESP_LIBRARIES_PATH": "/build/_deps/my_idf_libs-src"
+    "MY_ESP_LIBRARIES_LOCAL": "+",
+    "MY_ESP_LIBRARIES_PATH": "/tmp/esp32_idf_libs"
+    // "MY_ESP_LIBRARIES_PATH": "/build/_deps/my_idf_libs-src"
   },
   "idf.currentSetup": "/home/oleksandrminenko/esp/v5.5.1/esp-idf"
 }

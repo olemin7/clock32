@@ -116,7 +116,8 @@ export MOSQUITO_ADDR=192.168.1.2
 mosquitto_sub -d -t response/$TARGET_MAC -h $MOSQUITO_ADDR
 mosquitto_sub -d -t devices/$TARGET_MAC/# -h $MOSQUITO_ADDR
 
-mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"help"}' -h $MOSQUITO_ADDR
+mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"help"}' 
+mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"config"}' 
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"ldr","payload":{"min":100,"max":3000}}' -h nas.local
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"restart"}' -h $MOSQUITO_ADDR
@@ -125,7 +126,7 @@ mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m -h  $MOSQUITO_ADDR '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' 
 
-mosquitto_pub -d -t cmd/$TARGET_MAC -m -h  $MOSQUITO_ADDR '{"cmd":"display"}'
+mosquitto_pub -d -t cmd/$TARGET_MAC -h -m  $MOSQUITO_ADDR '{"cmd":"display"}'
 
 {"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
 

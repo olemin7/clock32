@@ -16,6 +16,7 @@ idf_component_register(
         "${my_idf_libs_SOURCE_DIR}/utils/kvs.cpp"
         #-----------------
         "${my_idf_libs_SOURCE_DIR}/test/tst_utils.cpp"
+        "${my_idf_libs_SOURCE_DIR}/proto/test/tst_handler.cpp"
        
     INCLUDE_DIRS
         "." 
