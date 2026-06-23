@@ -38,7 +38,7 @@ GPIO_NUM_21 |     | TX   |
 https://github.com/DiegoPaezA/ESP32-freeRTOS/blob/master/i2c_scanner/main/i2c_scanner.c
 https://github.com/espressif/esp-iot-solution/tree/dd15770d0f8c5fedea78809737f04b63d3765c83/examples/sensors/sensor_hub_monitor
 
-
+# build CLI
 . /home/oleksandr/ides/tools/esp-idf-v5.3/export.sh
 export IOT_SOLUTION_PATH=/home/oleksandr/personal/repo/esp-iot-solution
 idf.py set-target esp32c3
@@ -112,6 +112,7 @@ export TARGET_MAC=64E833885558
 export TARGET_MAC=64E833880880
 export TARGET_MAC=64E83387D7D0
 export TARGET_MAC=64E8338811DC
+export TARGET_MAC=64E833882354
 export MOSQUITO_ADDR=192.168.1.2
 mosquitto_sub -d -t response/$TARGET_MAC -h $MOSQUITO_ADDR
 mosquitto_sub -d -t devices/$TARGET_MAC/# -h $MOSQUITO_ADDR
@@ -133,6 +134,7 @@ mosquitto_pub -d -t cmd/$TARGET_MAC -h -m  $MOSQUITO_ADDR '{"cmd":"display"}'
 '{"cmd":"display","payload":{"segment_rotation":3,"segment_upsidedown":true,"mirrored":true}}
 
 '{"cmd":"timezone","payload":{"tz":"GMT-3"}}'
+'{"cmd":"timezone","payload":{"tz":"EET-2EEST,M3.5.0/3,M10.5.0/4"}}'
 
 [http command server]
 url /cmd
