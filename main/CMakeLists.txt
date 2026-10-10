@@ -4,6 +4,7 @@ idf_component_register(
         "${my_idf_libs_SOURCE_DIR}/provision/provision.cpp"
         "${my_idf_libs_SOURCE_DIR}/sntp/sntp.cpp"
         "clock_tm.cpp"
+        "svitlobot.cpp"
         "${my_idf_libs_SOURCE_DIR}/display/blink.cpp" 
         "${my_idf_libs_SOURCE_DIR}/sensors/sensor_event.cpp"
         "${my_idf_libs_SOURCE_DIR}/sensors/lighting.cpp"
@@ -17,6 +18,7 @@ idf_component_register(
         #-----------------
         "${my_idf_libs_SOURCE_DIR}/test/tst_utils.cpp"
         "${my_idf_libs_SOURCE_DIR}/proto/test/tst_handler.cpp"
+        "test/tst_svitlobot.cpp"
        
     INCLUDE_DIRS
         "." 
@@ -31,4 +33,6 @@ idf_component_register(
         si7021
         unity
         esp_http_server
+        esp_http_client
+        esp_timer
     )

@@ -6,3 +6,4 @@ sdkconfig.old
 *.s#*
 *.swp
 .cache/
+main/svitlobot_secret.h

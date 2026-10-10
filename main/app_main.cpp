@@ -5,6 +5,7 @@
 #include <iostream>
 #include <math.h>
 #include <string>
+#include <mutex>
 
 #include "rom/rtc.h"
 #include "sdkconfig.h"
@@ -13,6 +14,7 @@
 
 #include <esp_log.h>
 #include <esp_wifi.h>
+#include "esp_system.h"
 #include "freertos/queue.h"
 
 #include "esp_exception.hpp"
@@ -26,6 +28,7 @@
 #include "display/blink.hpp"
 #include "sntp/sntp.hpp"
 #include "clock_tm.hpp"
+#include "svitlobot.hpp"
 #include "iot_button.h"
 #include "sensors/sensor_event.hpp"
 #include "sensors/htu2x.hpp"
@@ -47,7 +50,7 @@
 using namespace std::chrono_literals;
 static const char *TAG = "main";
 
-constexpr auto DEVICE_SW = "CLOCK "__DATE__
+constexpr auto DEVICE_SW = "CLOCK " __DATE__
                            " " __TIME__;
 layers::layers display;
 
@@ -61,9 +64,17 @@ proto::handler commands;
 static EventGroupHandle_t app_main_event_group;
 constexpr int GOT_IP = BIT0;
 
+// Protects mqtt_mng and rssi_ptr. These are created/destroyed from the Wi-Fi/IP
+// event task, but also dereferenced from the esp_timer task (RSSI puller) and
+// the default-loop sensor handlers. On a weak signal Wi-Fi drops frequently, so
+// without this lock mqtt_mng could be freed between the null-check and the
+// dereference in another task -> use-after-free -> reboot.
+static std::mutex g_conn_mtx;
+
 template <typename T>
 void mqtt_send_sensor(const std::string &field, T value)
 {
+    std::lock_guard<std::mutex> lock(g_conn_mtx);
     if (mqtt_mng)
     {
         mqtt_mng->publish_device_brunch(field, value);
@@ -85,17 +96,18 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
     device_info.sw = DEVICE_SW;
     device_info.mac = utils::get_mac();
 
-    mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info,
-                                                    std::make_unique<mqtt::command_cb_t>([](auto msg)
-                                                                                         { return commands.on_command(msg); }));
-    rssi_ptr = std::make_unique<utils::puller<int>>([](int &rssi)
-                                                    { return ESP_OK == esp_wifi_sta_get_rssi(&rssi); },
-                                                    60s * 5, [](int rssi)
-                                                    {
-                                                        ESP_LOGI(TAG, "RSSI: %d", rssi); 
-                                                        mqtt_send_sensor("rssi", rssi); });
+    {
+        std::lock_guard<std::mutex> lock(g_conn_mtx);
+        // Guarding with g_conn_mtx prevents a race with the esp_timer (RSSI) task
+        // that also touches mqtt_mng. Reassigning the unique_ptr destroys any old
+        // client safely while the lock is held.
+        mqtt_mng = std::make_unique<mqtt::CMQTTWrapper>(device_info,
+                                                        std::make_unique<mqtt::command_cb_t>([](auto msg)
+                                                                                             { return commands.on_command(msg); }));
+    }
 
     sntp::start();
+    svitlobot::set_online(true);
     blink::stop(blink::BLINK_CONNECTING);
 }
 
@@ -103,7 +115,12 @@ static void event_lost_ip_handler(void *arg, esp_event_base_t event_base, int32_
 {
     blink::start(blink::BLINK_CONNECTING);
     ESP_LOGI(TAG, "event_lost_ip_handler");
-    rssi_ptr.reset();
+    svitlobot::set_online(false);
+    std::lock_guard<std::mutex> lock(g_conn_mtx);
+    // Only the MQTT client is torn down here. The RSSI puller is created once in
+    // init() and kept alive: while Wi-Fi is down its getter (esp_wifi_sta_get_rssi)
+    // simply fails and nothing is published, so there is no need - and it is unsafe -
+    // to delete its esp_timer from this (event) task while it may run on the timer task.
     mqtt_mng.reset();
 }
 
@@ -138,6 +155,29 @@ void mqtt_lighting(void * /*arg*/, esp_event_base_t /*event_base*/, int32_t /*ev
     mqtt_send_sensor("adc", event->raw);
 }
 
+static void log_reset_reason()
+{
+    const auto reason = esp_reset_reason();
+    const char *str = "UNKNOWN";
+    switch (reason)
+    {
+    case ESP_RST_POWERON:   str = "POWERON";   break;
+    case ESP_RST_EXT:       str = "EXT";       break;
+    case ESP_RST_SW:        str = "SW";        break;
+    case ESP_RST_PANIC:     str = "PANIC";     break;
+    case ESP_RST_INT_WDT:   str = "INT_WDT";   break;
+    case ESP_RST_TASK_WDT:  str = "TASK_WDT";  break;
+    case ESP_RST_WDT:       str = "WDT";       break;
+    case ESP_RST_DEEPSLEEP: str = "DEEPSLEEP"; break;
+    case ESP_RST_BROWNOUT:  str = "BROWNOUT";  break;
+    case ESP_RST_SDIO:      str = "SDIO";      break;
+    default:                                   break;
+    }
+    // PANIC/WDT point to the use-after-free fixed here; BROWNOUT points to the
+    // power supply (e.g. WiFi TX current peaks on a weak signal), not firmware.
+    ESP_LOGW(TAG, "reset reason: %s (%d)", str, (int)reason);
+}
+
 void init()
 {
     utils::print_info();
@@ -163,12 +203,23 @@ void init()
         .gpio_button_config = {
             .gpio_num = BOOT_BUTTON_NUM,
             .active_level = BUTTON_ACTIVE_LEVEL,
+            .disable_pull = false,
         },
     };
     button_handle_t btn_ptr = iot_button_create(&btn_cfg);
     assert(btn_ptr);
     ESP_ERROR_CHECK(iot_button_register_cb(btn_ptr, BUTTON_LONG_PRESS_START, button_event_cb, NULL));
     lighting::init();
+    svitlobot::init();
+    // Create the RSSI reporter once and keep it for the whole runtime, so its
+    // esp_timer is never deleted from another task. While Wi-Fi is down the
+    // getter fails and nothing is published.
+    rssi_ptr = std::make_unique<utils::puller<int>>([](int &rssi)
+                                                    { return ESP_OK == esp_wifi_sta_get_rssi(&rssi); },
+                                                    60s * 5, [](int rssi)
+                                                    {
+                                                        ESP_LOGI(TAG, "RSSI: %d", rssi);
+                                                        mqtt_send_sensor("rssi", rssi); });
     commands.add("ldr", [](auto payload)
                  {
                     proto::ldr_t data;
@@ -273,6 +324,7 @@ void init()
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "[APP] Startup..");
+    log_reset_reason();
     init();
     //  screen::tests();
 
@@ -300,10 +352,12 @@ extern "C" void app_main(void)
 #include "unity.h"
 void do_tests_utils();
 void do_tests_handler();
+void do_tests_svitlobot();
 
 extern "C" void app_main(void)
 {
     do_tests_utils();
     do_tests_handler();
+    do_tests_svitlobot();
 }
 #endif

@@ -81,4 +81,20 @@ menu "App Configuration"
 
     endmenu
 
+    menu "SvitloBot"
+        config SVITLOBOT_URL
+            string "SvitloBot channelPing URL"
+            default "https://api.svitlobot.in.ua/channelPing"
+            help
+                Channel key is not configured here: it lives in the
+                git-ignored main/svitlobot_secret.h.
+        config SVITLOBOT_INTERVAL_S
+            int "Ping interval (sec)"
+            range 30 600
+            default 55
+        config SVITLOBOT_TIMEOUT_S
+            int "HTTP request timeout (sec)"
+            default 15
+    endmenu
+
 endmenu

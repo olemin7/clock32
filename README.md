@@ -39,11 +39,16 @@ https://github.com/DiegoPaezA/ESP32-freeRTOS/blob/master/i2c_scanner/main/i2c_sc
 https://github.com/espressif/esp-iot-solution/tree/dd15770d0f8c5fedea78809737f04b63d3765c83/examples/sensors/sensor_hub_monitor
 
 # build CLI
-. /home/oleksandr/ides/tools/esp-idf-v5.3/export.sh
-export IOT_SOLUTION_PATH=/home/oleksandr/personal/repo/esp-iot-solution
+. ~/esp/v5.5.1/esp-idf/export.sh
+# path to esp32_idf_libs, relative to project root (used by main/Kconfig.projbuild)
+# default: copy fetched by CMake FetchContent
+export MY_ESP_LIBRARIES_PATH=/build/_deps/my_idf_libs-src
+# to work on a local checkout of the libs instead (path is still appended to project root):
+# export MY_ESP_LIBRARIES_LOCAL=1
 idf.py set-target esp32c3
 idf.py build
 idf.py menuconfig
+idf.py -p /dev/ttyACM0 flash
 
 null in the env https://github.com/espressif/idf-eclipse-plugin/issues/535https://components.espressif.com/
 
@@ -125,13 +130,14 @@ mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"restart"}' -h $MOSQUITO_ADDR
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' -h nas.local
 
-mosquitto_pub -d -t cmd/$TARGET_MAC -m -h  $MOSQUITO_ADDR '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' 
+mosquitto_pub -d -t cmd/$TARGET_MAC -h  $MOSQUITO_ADDR -m '{"cmd":"brightness","payload":{"points":[{"lighting":1530,"brightness":10}]}}' 
 
-mosquitto_pub -d -t cmd/$TARGET_MAC -h -m  $MOSQUITO_ADDR '{"cmd":"display"}'
+mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"display"}'
 
 {"cmd":"display","payload":{"segment_rotation":0,"segment_upsidedown":false,"mirrored":false}}
 
 '{"cmd":"display","payload":{"segment_rotation":3,"segment_upsidedown":true,"mirrored":true}}
+64E833885558 '{"cmd":"display","payload":{"segment_rotation":1,"segment_upsidedown":true,"mirrored":true}}'
 
 '{"cmd":"timezone","payload":{"tz":"GMT-3"}}'
 '{"cmd":"timezone","payload":{"tz":"EET-2EEST,M3.5.0/3,M10.5.0/4"}}'
@@ -143,7 +149,7 @@ smd the same as for mosqitoo
 
 printenv IDF_PATH
 
-export IDF_PATH="/home/oleksandrminenko/personal/esp-idf/v5.4/esp-idf"
+export IDF_PATH="/home/oleksandrminenko/esp/v5.5.1/esp-idf"
 
 [TODO]
 custom data when provision
@@ -155,3 +161,11 @@ idf.py -p /dev/ttyACM0 flash
 
 [mink]
 long press on boot btn ->reprovision
+
+[svitlobot]
+Keep-alive ping to SvitloBot (GET <SVITLOBOT_URL>?channel_key=<key>) every SVITLOBOT_INTERVAL_S while Wi-Fi is up.
+cp main/svitlobot_secret.h.example main/svitlobot_secret.h   # git-ignored, set the real channel key
+empty key / missing file -> feature disabled (warning in log)
+menuconfig: App Configuration -> SvitloBot (URL, interval 30..600 s, default 55; timeout default 15 s)
+NOTE: CONFIG_ESP_TLS_INSECURE + CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY are enabled,
+      server cert verification is off for ALL TLS connections in the firmware.
