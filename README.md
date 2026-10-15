@@ -166,6 +166,23 @@ long press on boot btn ->reprovision
 Keep-alive ping to SvitloBot (GET <SVITLOBOT_URL>?channel_key=<key>) every SVITLOBOT_INTERVAL_S while Wi-Fi is up.
 cp main/svitlobot_secret.h.example main/svitlobot_secret.h   # git-ignored, set the real channel key
 empty key / missing file -> feature disabled (warning in log)
-menuconfig: App Configuration -> SvitloBot (URL, interval 30..600 s, default 55; timeout default 15 s)
+menuconfig: App Configuration -> SvitloBot (URL, interval 65..600 s, default 120; timeout 3..30 s, default 8; startup jitter 0..600 s, default 30)
+Several clocks in one location intentionally share the same channel key: if at least one of them gets
+  through, the location is known to have power.
+The API records one ping per minute PER CHANNEL and answers HTTP 429 "That's too fast bro, once request
+  per minute please :)" to the rest. With a shared key that is normal and harmless - a sibling device
+  already reported for us - so 429 is logged at info level and treated as success, NOT retried
+  (retrying would only earn another 429).
+Interval bounds: above 60 s because of the rate limit (static_assert enforces >= 65 s), and far enough
+  below 240 s because the server posts " Світло зникло " after 4 minutes without an accepted ping.
+  An interval of 55 s used to make every ping of a single device race the limiter, which is what
+  produced the multi-minute holes - and the false blackout reports - in the channel history.
+transport error / other HTTP status -> retry in 5 s, then 10 s, then every 20 s until it succeeds, so a
+  transport failure never costs a whole interval and a missed cycle means a real outage
+first ping after boot is delayed by a random 0..SVITLOBOT_STARTUP_JITTER_S (0 = off) so that devices
+  coming back together after a blackout do not all hit the API in the same second; periodic pings are not jittered
+  (jitter must be <= interval, enforced by a static_assert)
+reconnect -> pings immediately (the sleep is aborted), a missed GOT_IP event is recovered from the netif state
+NOTE: the timeout is per socket operation, not for the whole request; DNS resolution is not covered by it at all.
 NOTE: CONFIG_ESP_TLS_INSECURE + CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY are enabled,
       server cert verification is off for ALL TLS connections in the firmware.

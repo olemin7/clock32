@@ -28,6 +28,7 @@ idf_component_register(
         wifi_provisioning 
         json 
         esp_wifi 
+        esp_netif
         driver 
         spi_flash
         si7021

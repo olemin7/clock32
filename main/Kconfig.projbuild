@@ -90,11 +90,32 @@ menu "App Configuration"
                 git-ignored main/svitlobot_secret.h.
         config SVITLOBOT_INTERVAL_S
             int "Ping interval (sec)"
-            range 30 600
-            default 55
+            range 65 600
+            default 120
+            help
+                The API allows one request per minute and answers HTTP 429
+                ("That's too fast bro") to anything faster, without recording
+                the ping. system keepalive timeout is 4min, so 120s is enough.
+        config SVITLOBOT_STARTUP_JITTER_S
+            int "Startup jitter (sec, 0 = off)"
+            range 0 600
+            default 30
+            help
+                Random delay before the very first ping after boot. Power
+                restoration brings every device on the grid up at once, and
+                without jitter they all hit the API in the same second. Only the
+                first ping is delayed; the periodic ones are not.
+                Must not exceed SVITLOBOT_INTERVAL_S (checked by a
+                static_assert), otherwise the channel would already read as
+                offline before the first ping goes out.
         config SVITLOBOT_TIMEOUT_S
             int "HTTP request timeout (sec)"
-            default 15
+            range 3 30
+            default 8
+            help
+                Applied per socket operation, not to the whole request, so a
+                single ping can take longer. Keep it small enough that a failed
+                ping plus a retry still fit inside SVITLOBOT_INTERVAL_S.
     endmenu
 
 endmenu
