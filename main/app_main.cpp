@@ -5,6 +5,7 @@
 #include <iostream>
 #include <math.h>
 #include <string>
+#include <sstream>
 #include <mutex>
 
 #include "rom/rtc.h"
@@ -12,6 +13,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include <esp_app_desc.h>
 #include <esp_log.h>
 #include <esp_wifi.h>
 #include "esp_system.h"
@@ -259,6 +261,19 @@ void init()
         screen::get_config(data.segment_rotation,data.segment_upsidedown,data.mirrored)  ;
 
         return proto::to_str(data); }, "display {segment_rotation,segment_upsidedown,mirrored}", true);
+
+    commands.add("version", [](auto)
+                 {
+        const esp_app_desc_t *app = esp_app_get_description();
+        // Same hand-rolled JSON style as proto::to_str; the fields are
+        // compile-time strings, so no escaping is needed.
+        std::stringstream ss;
+        ss << R"({"project":")" << app->project_name;
+        ss << R"(", "version":")" << app->version;
+        ss << R"(", "built":")" << app->date << " " << app->time;
+        ss << R"(", "idf":")" << app->idf_ver;
+        ss << R"("})";
+        return ss.str(); }, "version -> {project,version,built,idf}");
 
     commands.add("restart", [](auto)
                  {

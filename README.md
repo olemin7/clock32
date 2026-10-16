@@ -123,6 +123,7 @@ mosquitto_sub -d -t response/$TARGET_MAC -h $MOSQUITO_ADDR
 mosquitto_sub -d -t devices/$TARGET_MAC/# -h $MOSQUITO_ADDR
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"help"}' 
+mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"version"}' 
 mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"config"}' 
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"ldr","payload":{"min":100,"max":3000}}' -h nas.local

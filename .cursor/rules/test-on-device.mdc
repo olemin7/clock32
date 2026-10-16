@@ -1,0 +1,17 @@
+---
+description: Always verify firmware changes on a real device; how to pick which one
+alwaysApply: true
+---
+
+# Test on a real device
+
+Every firmware change must be verified on a real clock, not just by building.
+
+- Prefer the USB-connected device: check for `/dev/ttyACM*`; its MAC comes from
+  the boot log (serial) or MQTT traffic. OTA-capable devices can be tested
+  cable-free via the `ota-update` skill.
+- If no device is attached, do NOT pick a MAC silently: ask the user which
+  device to use (AskQuestion), offering the known MACs from `# cmd list` in
+  `README.md`.
+- Serial reminders: `stty -F /dev/ttyACM0 115200 raw -echo` after every reset;
+  kill stale `cat /dev/ttyACM0` readers before `idf.py flash`.
