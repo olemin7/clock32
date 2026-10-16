@@ -41,6 +41,22 @@ namespace svitlobot
     // Blocking single request.
     ping_result ping();
 
+    // Valid range for the runtime ping period. The floor is the API limit of
+    // one recorded ping per minute per channel.
+    constexpr uint32_t INTERVAL_MIN_S = 65;
+    constexpr uint32_t INTERVAL_MAX_S = 600;
+
+    bool interval_valid(uint32_t seconds);
+
+    // Runtime settings, persisted in NVS. Several clocks share one channel key,
+    // so pinging is enabled on one of them only (off by default) to keep the
+    // total request rate of the fleet low.
+    void set_enabled(bool enabled);
+    bool is_enabled();
+    // Returns false and keeps the old value when out of range.
+    bool set_interval_s(uint32_t seconds);
+    uint32_t interval_s();
+
     // Starts the background task; no-op (with a warning) if the key is empty.
     void init();
 

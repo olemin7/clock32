@@ -124,6 +124,7 @@ mosquitto_sub -d -t devices/$TARGET_MAC/# -h $MOSQUITO_ADDR
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"help"}' 
 mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"version"}' 
+mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"svitlobot","payload":{"enabled":true,"interval_s":120}}' 
 mosquitto_pub -d -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"config"}' 
 
 mosquitto_pub -d -t cmd/$TARGET_MAC -m '{"cmd":"ldr","payload":{"min":100,"max":3000}}' -h nas.local
@@ -182,6 +183,15 @@ Keep-alive ping to SvitloBot (GET <SVITLOBOT_URL>?channel_key=<key>) every SVITL
 cp main/svitlobot_secret.h.example main/svitlobot_secret.h   # git-ignored, set the real channel key
 empty key / missing file -> feature disabled (warning in log)
 menuconfig: App Configuration -> SvitloBot (URL, interval 65..600 s, default 120; timeout 3..30 s, default 8; startup jitter 0..600 s, default 30)
+Runtime switch + period (NVS, survive reboot/OTA, part of {"cmd":"config"}), OFF BY DEFAULT
+  (SVITLOBOT_DEFAULT_ENABLED=n, the menuconfig interval is only the default):
+  mosquitto_pub -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"svitlobot","payload":{"enabled":true}}'
+  mosquitto_pub -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"svitlobot","payload":{"interval_s":90}}'
+  mosquitto_pub -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"svitlobot"}'   # -> {"enabled":true, "interval_s":90}
+  Enable on EXACTLY ONE clock per channel: the fleet must stay at <= 2 requests/min (429 replies count).
+  interval_s outside 65..600 is rejected (reply keeps the old value); a change applies at once
+  (the next ping is one new period after the change); disabling stops pings without a reboot.
+  Rollout: a clock stops pinging as soon as it gets this firmware - update and enable the pinger first.
 Several clocks in one location intentionally share the same channel key: if at least one of them gets
   through, the location is known to have power.
 The API records one ping per minute PER CHANNEL and answers HTTP 429 "That's too fast bro, once request

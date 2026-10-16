@@ -6,6 +6,9 @@
 
 #include <inttypes.h>
 
+#include <algorithm>
+#include <atomic>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
@@ -16,6 +19,7 @@
 #include <esp_timer.h>
 
 #include "sdkconfig.h"
+#include "utils/kvs.hpp"
 
 #if __has_include("svitlobot_secret.h")
 #include "svitlobot_secret.h"
@@ -41,6 +45,18 @@ namespace svitlobot
         // Set on every transition to "online" so a sleeping task can abandon its
         // delay and ping right after a reconnect.
         constexpr EventBits_t RECONNECTED = BIT1;
+        // Set while pinging is enabled; a disabled task parks on it.
+        constexpr EventBits_t ENABLED = BIT2;
+        // A runtime setting changed: the sleeping task must re-evaluate.
+        constexpr EventBits_t SETTINGS_CHANGED = BIT3;
+
+        constexpr auto *KVS_ENABLED = "enabled";
+        constexpr auto *KVS_INTERVAL = "interval_s";
+#ifdef CONFIG_SVITLOBOT_DEFAULT_ENABLED
+        constexpr bool DEFAULT_ENABLED = true;
+#else
+        constexpr bool DEFAULT_ENABLED = false;
+#endif
 
         // Retry schedule. A failed ping used to cost a full interval, so a few
         // consecutive failures (DNS/TLS stalls on a weak link) added up to
@@ -48,9 +64,6 @@ namespace svitlobot
         constexpr uint32_t RETRY_MIN_MS = 5 * MS_PER_S;
         constexpr uint32_t RETRY_MAX_MS = 20 * MS_PER_S;
         constexpr uint32_t ONLINE_RECHECK_MS = 10 * MS_PER_S;
-        // api.svitlobot.in.ua records one ping per minute per channel and
-        // answers HTTP 429 to the rest.
-        constexpr uint32_t API_MIN_PERIOD_MS = 65 * MS_PER_S;
 
         // A jitter window wider than the interval would delay the first ping
         // past the point where the channel is already reported as offline.
@@ -58,10 +71,36 @@ namespace svitlobot
                       "SVITLOBOT_STARTUP_JITTER_S must not exceed SVITLOBOT_INTERVAL_S");
         // Pinging faster than the API allows gets every request thrown away with
         // HTTP 429, which looks exactly like a dead channel.
-        static_assert(CONFIG_SVITLOBOT_INTERVAL_S * MS_PER_S >= API_MIN_PERIOD_MS,
-                      "SVITLOBOT_INTERVAL_S must be above the API rate limit of one request per minute");
+        static_assert(CONFIG_SVITLOBOT_INTERVAL_S >= INTERVAL_MIN_S &&
+                          CONFIG_SVITLOBOT_INTERVAL_S <= INTERVAL_MAX_S,
+                      "SVITLOBOT_INTERVAL_S must be within INTERVAL_MIN_S..INTERVAL_MAX_S");
 
         EventGroupHandle_t event_group = nullptr;
+        // Cached copies of the NVS values: read by the ping task, written from
+        // the MQTT command handler.
+        std::atomic<bool> enabled{DEFAULT_ENABLED};
+        std::atomic<uint32_t> interval_seconds{CONFIG_SVITLOBOT_INTERVAL_S};
+
+        void load_settings()
+        {
+            auto kvss = kvs::handler(TAG);
+            uint8_t stored_enabled = DEFAULT_ENABLED;
+            kvss.get_value_or(KVS_ENABLED, stored_enabled, static_cast<uint8_t>(DEFAULT_ENABLED));
+            enabled = stored_enabled != 0;
+
+            uint32_t stored_interval = CONFIG_SVITLOBOT_INTERVAL_S;
+            kvss.get_value_or(KVS_INTERVAL, stored_interval, static_cast<uint32_t>(CONFIG_SVITLOBOT_INTERVAL_S));
+            // A value from older firmware with other bounds must not bypass them.
+            interval_seconds = interval_valid(stored_interval) ? stored_interval : CONFIG_SVITLOBOT_INTERVAL_S;
+        }
+
+        void notify_settings_changed()
+        {
+            if (event_group)
+            {
+                xEventGroupSetBits(event_group, SETTINGS_CHANGED);
+            }
+        }
 
         // The ONLINE bit is driven by IP/Wi-Fi events, and a missed
         // IP_EVENT_STA_GOT_IP would otherwise park the task on the event group
@@ -96,11 +135,35 @@ namespace svitlobot
             }
         }
 
-        // Interruptible sleep: returns early when connectivity came back, so the
-        // next ping is not postponed by the remainder of the delay.
-        void sleep_or_reconnect(uint32_t delay_ms)
+        // Interruptible sleep. Ends early on a reconnect, so the next ping is
+        // not postponed by the remainder of the delay. A settings change
+        // restarts the sleep with the new period instead of pinging at once,
+        // and ends it when pinging got disabled.
+        void sleep_or_reconnect(uint32_t delay_ms, bool retrying)
         {
-            xEventGroupWaitBits(event_group, RECONNECTED, pdTRUE, pdTRUE, pdMS_TO_TICKS(delay_ms));
+            for (;;)
+            {
+                const EventBits_t bits = xEventGroupWaitBits(event_group, RECONNECTED | SETTINGS_CHANGED,
+                                                             pdTRUE, pdFALSE, pdMS_TO_TICKS(delay_ms));
+                if ((bits & SETTINGS_CHANGED) == 0 || (bits & RECONNECTED) != 0 || !enabled)
+                {
+                    return;
+                }
+                if (!retrying)
+                {
+                    delay_ms = interval_seconds * MS_PER_S;
+                    ESP_LOGI(TAG, "interval changed, next ping in %" PRIu32 " ms", delay_ms);
+                }
+            }
+        }
+
+        void wait_enabled()
+        {
+            if (!enabled)
+            {
+                ESP_LOGI(TAG, "disabled, waiting");
+            }
+            xEventGroupWaitBits(event_group, ENABLED, pdFALSE, pdTRUE, portMAX_DELAY);
         }
 
         void task(void * /*arg*/)
@@ -109,26 +172,40 @@ namespace svitlobot
             bool first_ping = true;
             for (;;)
             {
+                if (!enabled)
+                {
+                    // Coming back from "disabled" behaves like a fresh start.
+                    first_ping = true;
+                    retry_ms = 0;
+                }
+                wait_enabled();
                 wait_online();
                 // Only reconnects that happen after this point may cut the sleep
                 // short, otherwise a stale flag would cause a back-to-back ping.
-                xEventGroupClearBits(event_group, RECONNECTED);
+                xEventGroupClearBits(event_group, RECONNECTED | SETTINGS_CHANGED);
 
+                const uint32_t interval_ms = interval_seconds * MS_PER_S;
                 if (first_ping)
                 {
                     first_ping = false;
                     // Spread the post-blackout stampede: every clock on the grid
                     // boots at the same moment, so without this they would all
-                    // call the API in the same second.
-                    const uint32_t jitter_ms = startup_jitter_ms(esp_random());
+                    // call the API in the same second. Capped by the runtime
+                    // interval so the first ping never comes later than a
+                    // regular one would.
+                    const uint32_t jitter_ms = std::min(startup_jitter_ms(esp_random()), interval_ms);
                     if (jitter_ms != 0)
                     {
                         ESP_LOGI(TAG, "startup jitter %" PRIu32 " ms", jitter_ms);
                         vTaskDelay(pdMS_TO_TICKS(jitter_ms));
                     }
+                    if (!enabled)
+                    {
+                        continue;
+                    }
                 }
 
-                uint32_t wait_ms = CONFIG_SVITLOBOT_INTERVAL_S * MS_PER_S;
+                uint32_t wait_ms = interval_ms;
                 switch (ping())
                 {
                 case ping_result::ok:
@@ -147,7 +224,7 @@ namespace svitlobot
                 }
                 ESP_LOGD(TAG, "stack high water mark %u", (unsigned)uxTaskGetStackHighWaterMark(nullptr));
 
-                sleep_or_reconnect(wait_ms);
+                sleep_or_reconnect(wait_ms, retry_ms != 0);
             }
         }
     } // namespace
@@ -255,6 +332,7 @@ namespace svitlobot
 
     void init()
     {
+        load_settings();
         if (key().empty())
         {
             ESP_LOGW(TAG, "channel key not set (main/svitlobot_secret.h), disabled");
@@ -266,6 +344,10 @@ namespace svitlobot
             ESP_LOGE(TAG, "xEventGroupCreate failed, disabled");
             return;
         }
+        if (enabled)
+        {
+            xEventGroupSetBits(event_group, ENABLED);
+        }
         if (xTaskCreate(task, "svitlobot", TASK_STACK_SIZE, nullptr, TASK_PRIORITY, nullptr) != pdPASS)
         {
             ESP_LOGE(TAG, "xTaskCreate failed, disabled");
@@ -273,8 +355,71 @@ namespace svitlobot
             event_group = nullptr;
             return;
         }
-        ESP_LOGI(TAG, "started, key=%s interval=%ds jitter=%ds", mask_key(key()).c_str(),
-                 CONFIG_SVITLOBOT_INTERVAL_S, CONFIG_SVITLOBOT_STARTUP_JITTER_S);
+        ESP_LOGI(TAG, "started, key=%s enabled=%d interval=%" PRIu32 "s jitter=%ds", mask_key(key()).c_str(),
+                 enabled ? 1 : 0, interval_seconds.load(), CONFIG_SVITLOBOT_STARTUP_JITTER_S);
+    }
+
+    bool interval_valid(uint32_t seconds)
+    {
+        return seconds >= INTERVAL_MIN_S && seconds <= INTERVAL_MAX_S;
+    }
+
+    void set_enabled(bool value)
+    {
+        {
+            auto kvss = kvs::handler(TAG);
+            if (ESP_OK != kvss.set_value(KVS_ENABLED, static_cast<uint8_t>(value)))
+            {
+                ESP_LOGE(TAG, "failed to store %s", KVS_ENABLED);
+            }
+        }
+        enabled = value;
+        ESP_LOGI(TAG, "%s", value ? "enabled" : "disabled");
+        if (event_group)
+        {
+            if (value)
+            {
+                xEventGroupSetBits(event_group, ENABLED);
+            }
+            else
+            {
+                xEventGroupClearBits(event_group, ENABLED);
+            }
+        }
+        notify_settings_changed();
+    }
+
+    bool is_enabled()
+    {
+        return enabled;
+    }
+
+    bool set_interval_s(uint32_t seconds)
+    {
+        if (!interval_valid(seconds))
+        {
+            ESP_LOGW(TAG, "interval %" PRIu32 "s rejected, allowed %" PRIu32 "..%" PRIu32,
+                     seconds, INTERVAL_MIN_S, INTERVAL_MAX_S);
+            return false;
+        }
+        {
+            auto kvss = kvs::handler(TAG);
+            if (ESP_OK != kvss.set_value(KVS_INTERVAL, seconds))
+            {
+                ESP_LOGE(TAG, "failed to store %s", KVS_INTERVAL);
+            }
+        }
+        if (interval_seconds.exchange(seconds) != seconds)
+        {
+            ESP_LOGI(TAG, "interval %" PRIu32 "s", seconds);
+            notify_settings_changed();
+        }
+        return true;
+    }
+
+    uint32_t interval_s()
+    {
+        return interval_seconds;
     }
 
     void set_online(bool online)

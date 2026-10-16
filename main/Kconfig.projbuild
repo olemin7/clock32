@@ -88,11 +88,22 @@ menu "App Configuration"
             help
                 Channel key is not configured here: it lives in the
                 git-ignored main/svitlobot_secret.h.
+        config SVITLOBOT_DEFAULT_ENABLED
+            bool "Ping enabled by default"
+            default n
+            help
+                Default for the runtime switch, used only until the device has
+                one stored in NVS ({"cmd":"svitlobot","payload":{"enabled":true}}).
+                Several clocks share one channel key, so pinging is enabled on
+                one clock only to keep the total request rate low.
         config SVITLOBOT_INTERVAL_S
             int "Ping interval (sec)"
             range 65 600
             default 120
             help
+                Default for the runtime setting "interval_s" (svitlobot command),
+                used until a value is stored in NVS. Same range is enforced at
+                runtime.
                 The API allows one request per minute and answers HTTP 429
                 ("That's too fast bro") to anything faster, without recording
                 the ping. system keepalive timeout is 4min, so 120s is enough.

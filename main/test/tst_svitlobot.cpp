@@ -96,6 +96,19 @@ TEST_CASE("startup_jitter_below_interval", "[svitlobot]")
     TEST_ASSERT_TRUE(CONFIG_SVITLOBOT_STARTUP_JITTER_S <= CONFIG_SVITLOBOT_INTERVAL_S);
 }
 
+// The runtime interval must never go below the API limit of one ping per
+// minute per channel, whatever arrives over MQTT.
+TEST_CASE("interval_valid_bounds", "[svitlobot]")
+{
+    TEST_ASSERT_FALSE(svitlobot::interval_valid(0));
+    TEST_ASSERT_FALSE(svitlobot::interval_valid(svitlobot::INTERVAL_MIN_S - 1));
+    TEST_ASSERT_TRUE(svitlobot::interval_valid(svitlobot::INTERVAL_MIN_S));
+    TEST_ASSERT_TRUE(svitlobot::interval_valid(CONFIG_SVITLOBOT_INTERVAL_S));
+    TEST_ASSERT_TRUE(svitlobot::interval_valid(svitlobot::INTERVAL_MAX_S));
+    TEST_ASSERT_FALSE(svitlobot::interval_valid(svitlobot::INTERVAL_MAX_S + 1));
+    TEST_ASSERT_FALSE(svitlobot::interval_valid(0xFFFFFFFFu));
+}
+
 void do_tests_svitlobot()
 {
     UNITY_BEGIN();

@@ -1,4 +1,6 @@
 #include <memory>
+#include <algorithm>
+#include <limits>
 #include <stdio.h>
 #include <inttypes.h>
 #include <chrono>
@@ -49,6 +51,7 @@
 #include "proto/defines.hpp"
 #include "proto/handler.hpp"
 #include "proto/http_server.hpp"
+#include "proto/json_wrapper.hpp"
 
 using namespace std::chrono_literals;
 static const char *TAG = "main";
@@ -274,6 +277,31 @@ void init()
         ss << R"(", "idf":")" << app->idf_ver;
         ss << R"("})";
         return ss.str(); }, "version -> {project,version,built,idf}");
+
+    commands.add("svitlobot", [](auto payload)
+                 {
+        if (payload)
+        {
+            json_wrapper::read_root root(payload.value());
+            // Both fields optional: a partial payload changes only what it names.
+            if (const auto enabled = root.get_field_bool("enabled"))
+            {
+                svitlobot::set_enabled(enabled.value());
+            }
+            if (const auto interval = root.get_field_number("interval_s"))
+            {
+                // Out of range -> ignored; the reply then shows the old value.
+                // Clamped before the cast: converting a negative or huge
+                // double to uint32_t is undefined behaviour.
+                const double requested = std::clamp(interval.value(), 0.0,
+                                                    static_cast<double>(std::numeric_limits<uint32_t>::max()));
+                svitlobot::set_interval_s(static_cast<uint32_t>(requested));
+            }
+        }
+        std::stringstream ss;
+        ss << R"({"enabled":)" << (svitlobot::is_enabled() ? "true" : "false");
+        ss << R"(, "interval_s":)" << svitlobot::interval_s() << "}";
+        return ss.str(); }, R"(svitlobot {"enabled":true|false,"interval_s":65..600})", true);
 
     commands.add("restart", [](auto)
                  {

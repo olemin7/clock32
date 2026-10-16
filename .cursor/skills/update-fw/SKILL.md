@@ -116,8 +116,10 @@ Report the reset reason, the obtained IP and the first SvitloBot ping result.
 ## Settings reference
 
 `{"cmd":"config"}` returns every command registered with `is_config=true`, currently `ldr`,
-`brightness`, `display`, `timezone` and `mqtt`, and the same payload shape restores all of them in
-one request. Per-setting commands (`{"cmd":"display"}`, `{"cmd":"brightness"}`, ...) work as a
+`brightness`, `display`, `timezone`, `mqtt` and `svitlobot` (`enabled`, `interval_s`), and the same
+payload shape restores all of them in one request. A snapshot from firmware older than the
+`svitlobot` command lacks that key, so after such an update the clock comes up with SvitloBot
+**disabled** - re-enable it on the one pinging clock. Per-setting commands (`{"cmd":"display"}`, `{"cmd":"brightness"}`, ...) work as a
 fallback; sending one with no payload reads it, sending one with a payload writes it.
 
 Full command list and MQTT topic layout: `# cmd list` in `README.md`.
