@@ -12,3 +12,9 @@ CONFIG_LWIP_DHCP_MAX_NTP_SERVERS=1
 # SvitloBot: HTTPS without server cert verification (firmware-wide)
 CONFIG_ESP_TLS_INSECURE=y
 CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY=y
+# OTA: two app slots on 4MB flash, so the image must stay small (-Os) and the
+# unused cert bundle (~219K, dead weight with verification off) stays out.
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=n
+CONFIG_ESP_HTTPS_OTA_ALLOW_HTTP=y
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y

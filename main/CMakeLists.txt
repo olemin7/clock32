@@ -5,6 +5,7 @@ idf_component_register(
         "${my_idf_libs_SOURCE_DIR}/sntp/sntp.cpp"
         "clock_tm.cpp"
         "svitlobot.cpp"
+        "ota.cpp"
         "${my_idf_libs_SOURCE_DIR}/display/blink.cpp" 
         "${my_idf_libs_SOURCE_DIR}/sensors/sensor_event.cpp"
         "${my_idf_libs_SOURCE_DIR}/sensors/lighting.cpp"
@@ -35,5 +36,7 @@ idf_component_register(
         unity
         esp_http_server
         esp_http_client
+        esp_https_ota
+        app_update
         esp_timer
     )

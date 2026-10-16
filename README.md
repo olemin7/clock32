@@ -159,6 +159,20 @@ custom data when provision
 https://www.throwtheswitch.org/unity
 idf.py -p /dev/ttyACM0 flash
 
+[ota]
+Two-slot OTA layout (partitions.csv): nvs/phy_init keep pre-OTA offsets, so the one-time USB migration
+  flash preserves provisioning and settings; afterwards updates go over the air.
+Each app slot is 0x1F0000 (~1.98 MB). Size budget guards: -Os, no TLS cert bundle (verification is off
+  anyway), no IPv6. If the image outgrows the slot, the next lever is Bluedroid -> NimBLE (~200 KB).
+flow:
+  idf.py build
+  cd build && python3 -m http.server 8070        # or copy clock32.bin to any LAN http server
+  mosquitto_pub -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"ota","payload":{"url":"http://<host-ip>:8070/clock32.bin"}}'
+  mosquitto_pub -t cmd/$TARGET_MAC -h $MOSQUITO_ADDR -m '{"cmd":"ota"}'   # no payload -> status (slot, build date, state)
+Rollback: CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y; the new image is confirmed (ota::mark_valid) only
+  after Wi-Fi got an IP and the MQTT client was created - a crash-looping image rolls back on reset.
+USB flash stays as recovery and for the one-time migration from the old single-factory layout.
+
 [mink]
 long press on boot btn ->reprovision
 

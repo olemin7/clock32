@@ -45,8 +45,23 @@ If the broker is unreachable, stop and ask the user how to proceed - do not flas
 
 ## Step 3: Build and flash
 
-The build needs the ESP-IDF env plus the path to `esp32_idf_libs`, otherwise kconfgen fails with
-`'/provision/provision.projbuild' not found`:
+Two paths. **OTA (preferred when the device already runs an OTA-capable image, i.e. partition
+label `ota_0`/`ota_1` in `{"cmd":"ota"}` status):**
+
+```bash
+source ~/esp/v5.5.1/esp-idf/export.sh
+export MY_ESP_LIBRARIES_LOCAL=+ MY_ESP_LIBRARIES_PATH=/tmp/esp32_idf_libs
+idf.py build
+../ota-update/scripts/ota_push.sh <MAC> <BROKER>   # serve + trigger + poll until slot flips
+```
+
+Details and gotchas (firewall, status format, size limit) are in the `ota-update` skill.
+
+OTA needs no cable and no restore step (NVS is not involved), but still do the snapshot.
+The device confirms the new image only after Wi-Fi + MQTT come up; a broken image rolls back
+on the next reset.
+
+**USB (first migration to the OTA layout, or recovery):**
 
 ```bash
 source ~/esp/v5.5.1/esp-idf/export.sh
@@ -81,10 +96,16 @@ Then repeat step 4 to confirm the values stuck.
 
 ## Step 6: Verify
 
+After an OTA update (no cable): poll `{"cmd":"ota"}` over MQTT - the reported `slot:` must have
+flipped (`ota_0` <-> `ota_1`) and `built:` must show the new build timestamp. Also expect the
+`ota: image confirmed, rollback cancelled` log once the device reconnects.
+
+After a USB flash, use the serial log:
+
 ```bash
 stty -F /dev/ttyACM0 115200 raw -echo    # MUST be re-run after every reset
 timeout 120 cat /dev/ttyACM0 > /tmp/boot.txt
-grep -aE "reset reason|SvitloBot|IP Address" /tmp/boot.txt
+grep -aE "reset reason|SvitloBot|IP Address|ota" /tmp/boot.txt
 ```
 
 The USB CDC re-enumerates on reset, so a `cat` without a fresh `stty` returns 0 bytes immediately.

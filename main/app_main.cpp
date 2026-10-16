@@ -29,6 +29,7 @@
 #include "sntp/sntp.hpp"
 #include "clock_tm.hpp"
 #include "svitlobot.hpp"
+#include "ota.hpp"
 #include "iot_button.h"
 #include "sensors/sensor_event.hpp"
 #include "sensors/htu2x.hpp"
@@ -108,6 +109,9 @@ static void event_got_ip_handler(void *arg, esp_event_base_t event_base, int32_t
 
     sntp::start();
     svitlobot::set_online(true);
+    // The app has Wi-Fi and an MQTT client: good enough to keep. Without this a
+    // freshly OTA-updated image is rolled back on the next reset.
+    ota::mark_valid();
     blink::stop(blink::BLINK_CONNECTING);
 }
 
@@ -262,6 +266,19 @@ void init()
         vTaskDelay(pdMS_TO_TICKS(500));
         esp_restart();
         return "restart"; });
+
+    commands.add("ota", [](auto payload)
+                 {
+        // Reuses mqtt_t: the payload is the same {"url":...} shape.
+        proto::mqtt_t data;
+        if (payload && proto::get(payload.value(), data))
+        {
+            if (!ota::start(data.url))
+            {
+                return std::string("ota rejected: ") + ota::status();
+            }
+        }
+        return ota::status(); }, R"(ota {"url":"http://host:8070/clock32.bin"}, no payload -> status)");
 
     commands.add("factory_reset", [](auto)
                  {
